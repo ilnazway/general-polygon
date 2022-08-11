@@ -1,0 +1,9 @@
+{
+    "version": 3,
+    "mappings": "",
+    "sources": [
+        "../sass/custom-select.scss"
+    ],
+    "names": [],
+    "file": "custom-select.min.css"
+}
