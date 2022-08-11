@@ -18,7 +18,7 @@
     background-color: transparent;
     cursor: pointer;
     position: relative;
-    transition: 0.5s step-end;
+    transition: 0.35s step-end;
     &::after {
       content: '';
       background: center / contain no-repeat url('./../img/arrow_icon.svg');
@@ -57,7 +57,7 @@
 
     max-height: 0;
     visibility: hidden;
-    transition: 0.5s ease-in;
+    transition: 0.35s ease-in;
   }
   &__dropdown_open {
     max-height: 240px;
@@ -76,6 +76,9 @@
     cursor: pointer;
     &:not(:last-child) {
       border-bottom: 1px solid #ced4da;
+    }
+    &:hover {
+      color: #E63756;
     }
   }
 }

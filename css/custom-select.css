@@ -20,8 +20,8 @@
   background-color: transparent;
   cursor: pointer;
   position: relative;
-  -webkit-transition: 0.5s step-end;
-  transition: 0.5s step-end;
+  -webkit-transition: 0.35s step-end;
+  transition: 0.35s step-end;
 }
 
 .custom-select__btn::after {
@@ -76,8 +76,8 @@
   cursor: pointer;
   max-height: 0;
   visibility: hidden;
-  -webkit-transition: 0.5s ease-in;
-  transition: 0.5s ease-in;
+  -webkit-transition: 0.35s ease-in;
+  transition: 0.35s ease-in;
 }
 
 .custom-select__dropdown_open {
@@ -102,5 +102,9 @@
 
 .custom-select__option:not(:last-child) {
   border-bottom: 1px solid #ced4da;
+}
+
+.custom-select__option:hover {
+  color: #E63756;
 }
 /*# sourceMappingURL=custom-select.css.map */

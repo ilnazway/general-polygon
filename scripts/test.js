@@ -1,9 +1,7 @@
-const { createApp, ref } = Vue;
+const { createApp, ref, onMounted } = Vue;
 
 const test = {
   setup() {
-    const list = ['cat', 'dog', 'people', 'people'];
-
     const selectData = ref({
       type: {
         all: 'Все новости',
@@ -17,34 +15,50 @@ const test = {
       stateOpen: false,
     });
 
-    function dropdownSortMenu(event) {
+    onMounted(
+      function now() {
+        let dropdown = document.querySelector('.custom-select__dropdown');
+        // console.log(dropdown.closest('.custom-select'));
+      }
+    );
+
+    function dropdownSortMenu(e) {
+
       let stateOpen = selectData.value.stateOpen;
       selectData.value.stateOpen = !stateOpen;
 
-      let select = event.target.closest('.custom-select');
+      let select = e.target.closest('.custom-select');
+      console.log(select);
       // let dropdown = select.querySelector('.custom-select__dropdown');
+      // console.log('dropdown: ', dropdown);
 
       document.addEventListener('click', outsideEvtListener);
 
       function outsideEvtListener(evt) {
+      console.log('evt: ', evt);
           if (evt.target === select || select.contains(evt.target)) {
               return;
           }
-          stateOpen = selectData.value.stateOpen;
+stateOpen = selectData.value.stateOpen;
           selectData.value.stateOpen = !stateOpen;
           // убираем слушатель событий
           document.removeEventListener('click', outsideEvtListener);
       }
     };
 
+    
+
     function updateCategory(e) {
       let category = e.target.getAttribute('data-type');
       console.log('category: ', category);
 
+      // document.removeEventListener('click', outsideEvtListener);
+
+      // let stateOpen = selectData.value.stateOpen;
+      // selectData.value.stateOpen = !stateOpen;
     };
 
     return {
-      list,
       selectData,
       dropdownSortMenu,
       updateCategory,
@@ -61,6 +75,7 @@ const test = {
         </div>
     </div>
   </div>
+  <div class="cubick"></div>
   `,
 };
 
