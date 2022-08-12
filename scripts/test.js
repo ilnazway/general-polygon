@@ -22,41 +22,57 @@ const test = {
       }
     );
 
-    function dropdownSortMenu(e) {
 
-      let stateOpen = selectData.value.stateOpen;
-      selectData.value.stateOpen = !stateOpen;
+    function dropdownSortMenu(event) {
 
-      let select = e.target.closest('.custom-select');
-      console.log(select);
-      // let dropdown = select.querySelector('.custom-select__dropdown');
-      // console.log('dropdown: ', dropdown);
-
-      document.addEventListener('click', outsideEvtListener);
-
-      function outsideEvtListener(evt) {
-      console.log('evt: ', evt);
-          if (evt.target === select || select.contains(evt.target)) {
-              return;
-          }
-stateOpen = selectData.value.stateOpen;
-          selectData.value.stateOpen = !stateOpen;
-          // убираем слушатель событий
-          document.removeEventListener('click', outsideEvtListener);
+      console.log('click dropdown');
+      let status = selectData.value.stateOpen;
+      console.log('status: ', status);
+    
+      if (!status) {
+        openOrClose();
+        document.addEventListener('click', outsideEvtListener);
+      } else {
+        document.removeEventListener('click', outsideEvtListener);
+        openOrClose();
       }
+
     };
 
+    function outsideEvtListener(event) {
+
+      const customSelect = document.querySelector('.custom-select');
+      const customBtn = document.querySelector('.custom-select__btn');
+      const customOptions = document.querySelector('.custom-select__options');
+
+      if (event.target === customSelect || customSelect.contains(event.target)) {
+        console.log('no do');
+        return;
+      } else {
+        console.log('yes do');
+        openOrClose();
+        document.removeEventListener('click', outsideEvtListener);
+      }
+
+    }
     
 
     function updateCategory(e) {
+
       let category = e.target.getAttribute('data-type');
       console.log('category: ', category);
 
-      // document.removeEventListener('click', outsideEvtListener);
+      document.removeEventListener('click', outsideEvtListener);
 
-      // let stateOpen = selectData.value.stateOpen;
-      // selectData.value.stateOpen = !stateOpen;
+      openOrClose();
+
+      // 
     };
+
+    function openOrClose() {
+      let stateOpen = selectData.value.stateOpen;
+      selectData.value.stateOpen = !stateOpen;
+    }
 
     return {
       selectData,
@@ -75,7 +91,6 @@ stateOpen = selectData.value.stateOpen;
         </div>
     </div>
   </div>
-  <div class="cubick"></div>
   `,
 };
 

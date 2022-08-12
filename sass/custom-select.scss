@@ -1,3 +1,8 @@
+$openTime: 0.7s;
+$closeTime: 0.35s;
+$heightDropdown: 240px;
+
+
 .custom-select_wrap {
   max-width: 240px;
   margin: 0 auto;
@@ -18,7 +23,7 @@
     background-color: transparent;
     cursor: pointer;
     position: relative;
-    transition: 0.35s step-end;
+    transition: $closeTime step-end;
     &::after {
       content: '';
       background: center / contain no-repeat url('./../img/arrow_icon.svg');
@@ -33,7 +38,7 @@
   }
   &__btn_open {
     border-radius: 10px 10px 0 0;
-    transition: 0.7s step-start;
+    transition: $openTime step-start;
     &::after {
       transform: translateY(-50%) scale(1, -1);
       transition: transform 0.35s ease-out;
@@ -57,12 +62,12 @@
 
     max-height: 0;
     visibility: hidden;
-    transition: 0.35s ease-in;
+    transition: $closeTime ease-in;
   }
   &__dropdown_open {
-    max-height: 240px;
+    max-height: $heightDropdown;
     visibility: visible;
-    transition: 0.7s ease-out;
+    transition: $openTime ease-out;
   }
   &__options {
     list-style: none;
