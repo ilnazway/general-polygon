@@ -1,0 +1,9 @@
+{
+    "version": 3,
+    "mappings": "AAAA,AAAA,mBAAmB,AAAC,CAClB,MAAM,CAAE,MAAM,CACd,UAAU,CAAE,MAAM,CACnB,AAED,AAAA,cAAc,AAAC,CACb,OAAO,CAAE,YAAY,CACtB",
+    "sources": [
+        "../sass/custom-serach.scss"
+    ],
+    "names": [],
+    "file": "custom-serach.min.css"
+}

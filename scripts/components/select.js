@@ -1,4 +1,4 @@
-const { createApp, ref, onMounted } = Vue;
+const { ref, onMounted } = Vue;
 
 export const customSelect = {
   setup() {
