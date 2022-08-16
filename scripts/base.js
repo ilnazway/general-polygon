@@ -5,6 +5,13 @@ import { customSelect } from './components/select.js';
 const { createApp, ref, onMounted } = Vue;
 
 const base = {
+
+  props: {
+    user: {
+      type: 'String',
+    }
+  },
+
   setup() {
     onMounted(
       function() {
