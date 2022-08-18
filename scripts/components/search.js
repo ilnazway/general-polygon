@@ -6,7 +6,10 @@ export const customSearch = {
     string: 'test props',
   },
 
+
   setup(propts) {
+
+  const test5 = 'string component';
 
     const propsDataTest = toRefs(propts);
 
@@ -66,6 +69,7 @@ export const customSearch = {
     };
 
     return {
+      test5,
       searchData,
       cardsData,
       reactiveInput,

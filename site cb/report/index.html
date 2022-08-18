@@ -1,0 +1,254 @@
+<style>
+.tip_a
+{
+ color:black;
+ padding:3px;
+ text-decoration:none;
+}
+
+.tip_a:hover
+{
+ color:black;
+ text-decoration:none;
+ background:#ccc;
+}
+
+.start_link
+{
+ color:#0075ce;
+ font :16px Arial;
+ font-weight:bold;
+ text-decoration:none;
+}
+
+.yellow_box
+{
+  color:gray;
+  background:url('images/left_list_marker1.png') no-repeat 5px 50%;
+  padding:8px 8px 8px 30px;
+  margin:0 15px 0 0;
+  display:block;
+  text-decoration: none;
+}
+
+.yellow_box:hover a
+{
+  color:black;
+}
+
+.yellow_box:hover
+{
+ background:url('images/left_list_marker1_hover.png') no-repeat 5px 50%;
+ background-color:#ffffcc;
+ color:black;
+}
+
+.filters
+{
+  float:left;
+  margin-bottom:4px;
+}
+
+.filters a
+{
+  text-decoration: none;
+  color:#000;
+}
+.filters a:hover
+{
+  text-decoration: none;
+  color:#fff;
+}
+
+.important
+{
+ color:red;
+ font-size:9px;
+}
+
+.tablet{
+  border-top:1px silver solid;
+  border-bottom:1px silver solid;
+  font-size:12px;
+  color:black;
+ }
+
+.tdt
+{
+  padding:15px 20px 24px 30px;
+  color:#808080;
+  font-size:16px;
+  /*cursor:pointer*/
+}
+.table_manager td:last-child{
+border-right:none !important;
+}
+
+.table_manager tr:first-child td {
+  border-top: medium none navy;
+}
+.table_manager tr:last-child td {
+  border-bottom: medium none navy;
+}
+.table_manager td{
+  border-right:1px dashed #B3BFC9;
+  text-align:center;
+  border-bottom:1px solid silver;
+}
+.table_manager{
+width:90%;
+margin:50px auto 0 auto;
+}
+.td_r, .table_manager td
+{
+  border-right:1px dashed #B3BFC9;
+}
+#brdCent {
+  border-right:1px dashed #B3BFC9;
+}
+.tdt_sum
+{
+  margin-top:8px;
+  color:#006699;
+  font-size:27px;
+}
+/*.tdt:hover {
+    background-color: #FCFC79;
+}*/
+.tdt_sum_a{
+  text-decoration:none;
+}
+
+.tdt_sum_a:hover a{
+  color:#006699;
+  text-decoration:underline;
+}
+
+.tdt_min
+{
+  margin-top:12px;
+  font-size:15px;
+  color:black;
+}
+.table_first_div {
+    height: 40px;
+}
+.headfortable {
+    color: #808080;
+}
+.table_first_div hr {
+     border: none; /* Убираем границу для браузера Firefox */
+     color: #BFBFBF; /* Цвет линии для браузера Internet Explorer */
+     background-color: #BFBFBF; /* Цвет линии для браузера Firefox и Opera */
+     height: 1px;
+}
+#nowpay {
+    color: black;
+}
+#red {
+    color: red;
+}
+#report_form .jqplot-table-legend {
+    max-height: 22px;
+    height:22px;
+}
+.consolidated-report {
+    display: flex;
+}
+.consolidated-report__panel {
+    display: flex;
+    align-items: center;
+}
+.consolidated-report__links {
+    padding: 6px 6px 0 6px;
+    margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .consolidated-report {
+    flex-direction: column;
+  }
+  .consolidated-report__panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .consolidated-report__links {
+    margin-left: 0;
+    padding: 6px 0 0 0;
+  }
+}
+</style>
+
+
+
+<table id="sv_main" style="margin-top:-6px; width: 100%">
+  <tr>
+    <td style="display: flex" class="consolidated-report">
+      <div class="consolidated-report__panel">
+        <div style="padding-right:30px">
+          <h1>Сводный отчет</h1>
+          {*if $user.group_id==1}<a target="_blank" href="edit_report.php?report={$report_id}" title="Редактировать" class="no_print" style="text-decoration: none"><img class="settings_t" style="margin:0 0 -3px 0px;" src="images/settings_b.gif" border="0" /></a>{/if*}
+        </div>
+
+        <div style="padding-top:4px;padding-right:10px">
+          <span id="datemanager" class="input_element">
+            <select name="period" onchange="go_table('{$graph}','{$graphm}',this.options[this.selectedIndex].value)">
+              <!--<option value="неделя">неделя</option>-->
+              <!--<option value="недели">две недели</option>-->
+              <option value="месяц">месяц</option>
+              <option value="квартал">квартал</option>
+              <option value="год">год</option>
+              <option value="все_время">все_время</option>
+            </select>
+          </span>
+        </div>
+
+        <div style="padding-top:6px;padding-right:6px">
+          <span class="input_element">
+            <span id="date11">{$dateToView}</span>
+          </span>
+        </div>
+
+        <!--<td style="padding-top:6px;padding-right:6px" width=750px align=right>
+            Ваша партнерская ссылка:
+            <a href='https://clientbase.ru/i/{$id_partner}'><b>clientbase.ru/i/{$id_partner}</b></a><br>
+            <a href="https://clientbase.ru/partner_program/support_for_partners/index.php?have_lic=Да&company_name={$fio_partner}&email={$email_partner}&phone={$phone_partner}&fio={$fio_partner}&id_partner={$id_partner}" target = "_blank">
+                Заявка в Техподдержку
+            </a> &nbsp;&nbsp;&nbsp;
+        </td>
+        <td style="padding-top:6px;padding-right:6px" width=750px align=left>
+            <a href="/report.php?id=51">Получить код формы</a> &nbsp;&nbsp;&nbsp;
+            <a href="report.php?id=10">Пригласить</a> &nbsp;&nbsp;&nbsp;
+            <a href="http://clientbase.ru/forum/index.php?showtopic=4928" target="_blanc">Обсудить на форуме</a>
+        </td>-->
+      </div>
+      <div class="consolidated-report__links">
+          <table>
+              <tr>
+                  <td style="text-align: center;">
+                      Полезные ссылки
+                  </td>
+              </tr>
+              <tr>
+                  <td>
+                      <a href="report.php?id=10">Пригласить</a> |
+                      <a href="https://clientbase.ru/partner_program/support_for_partners/index.php?have_lic=Да&company_name={$fio_partner}&email={$email_partner}&phone={$phone_partner}&fio={$fio_partner}&id_partner={$id_partner}" target = "_blank">
+                          Заявка в Техподдержку
+                      </a> |
+                      <a href="http://clientbase.ru/forum/index.php?showtopic=4928" target="_blanc">Обсудить на форуме</a> |
+                      <a href="/report.php?id=51" title="Получите код, который возможно будет вставить на сайт для создания аккаунтов программы с Вашей партнерской ссылкой">
+                          Получить код формы
+                      </a> |
+                      Ваша партнерская ссылка:
+                      <a href='https://clientbase.ru/i/{$id_partner}'><b>clientbase.ru/i/{$id_partner}</b></a>
+                  </td>
+              </tr>
+          </table>
+      </div>
+
+    </td>
+  </tr>
+  <tr>
+    <td  align="right" style="padding-bottom:6px; padding-right:6px"><a href="https://clientbase.ru/partner_program/partner_programm_cb/" target="_blanc">Таблица процентов вознаграждений</a></td>
+  </tr>
+</table>
