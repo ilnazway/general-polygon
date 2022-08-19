@@ -1,0 +1,1337 @@
+<?php
+if (isset($_REQUEST['ajax'])) {
+    $mail = $_REQUEST['check_mail'];
+    // Проверяем через api количество лицензий по email за текущий день
+    $api_key = 'e355357d36132adf8164cb68707192a6';
+    $api_url = 'https://mstl.clientbase.ru/';
+    $api_login = 'admin';
+    function send_command_server($server_url, $server_command)
+    {
+        $data_string = json_encode($server_command);
+        $ch = curl_init($server_url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($data_string)
+            ]
+        );
+
+        $json = curl_exec($ch);
+        $result = json_decode($json, true);
+        curl_close($ch);
+
+        if (count($result)) {
+            return $result;
+        }
+        return $json;
+    }
+
+    function auth($api_url, $auth_key, $login)
+    {
+        $command_auth_request = array(
+            'v' => '1.0',
+            'login' => $login
+        );
+        $result_auth_request = send_command_server($api_url . 'api/auth/request/',
+            $command_auth_request);
+        $command_auth_auth = array(
+            'v' => '1.0',
+            'login' => $login,
+            'hash' => md5($result_auth_request['salt'] . $auth_key)
+        );
+        $result_auth_auth = send_command_server($api_url . 'api/auth/auth/', $command_auth_auth);
+        $access_id = $result_auth_auth['access_id'];
+        $_SESSION['access_id'] = $access_id;
+
+        return $access_id;
+    }
+
+    $access_token = auth($api_url, $api_key, $api_login);
+    // Ограничение 3 лицензии в день по умолчанию. Значение берем из таблицы 281 в mstl
+    $license = 3;
+    $command = [
+        'access_id' => $access_token,
+        'table_id' => 281,
+        'cals' => false,
+        'fields' => [
+            'row' => ['f4301'],
+        ],
+        'filter' => [
+            'row' => [
+                'id' => [
+                    'term' => '=',
+                    'value' => 1,
+                ],
+            ]
+        ],
+        'sort' => [
+            'row' => [
+                'id' => 'ASC'
+            ]
+        ],
+        'start' => 0,
+        'limit' => 1,
+    ];
+    $license_response = send_command_server($api_url . 'api/data/read/', $command);
+    if ($license_response['code'] === 0 && isset($license_response['data'][1]['row']['f4301'])) {
+        $license = (int)$license_response['data'][1]['row']['f4301'];
+    }
+    $command = [
+        'access_id' => $access_token,
+        'table_id' => 83,
+        'cals' => false,
+        'fields' => [
+            'row' => ['add_time', 'f1031'],
+        ],
+        'filter' => [
+            'row' => [
+                'f1031' => [
+                    'term' => '=',
+                    'value' => $mail,
+                    'union' => 'AND'
+                ],
+                'add_time' => [
+                    'term' => '<=',
+                    'value' => date('Y-m-d 23:59:59'),
+                ],
+            ]
+        ],
+        'sort' => [
+            'row' => [
+                'add_time' => 'DESC'
+            ]
+        ],
+        'start' => 0,
+        'limit' => 5,
+    ];
+
+    $return = 'ok';
+    $result = send_command_server($api_url . 'api/data/read/', $command);
+    $i = 0;
+    if ($result['code'] === 0) {
+        // Если больше двух, то проверяем даты, иначе все норм
+        if (count($result['data']) > 2) {
+            foreach ($result['data'] as $line_info) {
+                $row = $line_info['row'];
+                // Почему я сразу в запросе не выбрал даты за сегодняшний день? Апи не позволяет на данный момент
+                if (date('Y-m-d') === date('Y-m-d', strtotime($row['add_time']))) {
+                    $i++;
+                }
+            }
+        }
+        if ($i >= $license) {
+            $return = 'limit over';
+        }
+    } else {
+        $return = $result['message'];
+    }
+    echo $return;
+    exit;
+}
+if ($_REQUEST['online_paid']) {
+    $inv_id = (int)$_REQUEST['inv_id']; // id заказа
+    $out_summ = (int)$_REQUEST['out_summ']; // сумма заказа
+    $shp_item = addslashes($_REQUEST['shp_item']); // тип заказа
+    mysql_query("insert into robokassa values ('$inv_id','$out_summ','$shp_item',0,0)") or die(mysql_error());
+} elseif ($_REQUEST['yandex_paid']) {
+    $inv_id = (int)$_REQUEST['inv_id']; // id заказа
+    $out_summ = (int)$_REQUEST['out_summ']; // сумма заказа
+    $shp_item = addslashes($_REQUEST['shp_item']); // тип заказа
+    mysql_query("insert into yandex_pays values ('$inv_id','$out_summ','$shp_item',0,0)") or die(mysql_error());
+} elseif ($_REQUEST['paid_complete']) {
+    echo "Онлайн-оплата успешно проведена. Спасибо.<br><br>В течении нескольких минут на указанный Вами e-mail должно прийти письмо.";
+} elseif ($_REQUEST['paid_fail']) {
+    echo "Онлайн оплата завершилась неудачей.";
+} else {
+    ?>
+    <script>
+        var k_answer6 = "";
+        /*задержка выполнения функции сделана во избжании конфликта с jq-selectbox. этот селектор должен создаваться на странице раньше данной функции*/
+        setTimeout(function () {
+            var user_count = 12;
+            <?php
+            if ($_REQUEST['usr'] == 1) echo "user_count = 1;\n";
+            if ($_REQUEST['usr'] == 3) echo "user_count = 3;\n";
+            if ($_REQUEST['usr'] == 7) echo "user_count = 7;\n";
+            if ($_REQUEST['usr'] == 12) echo "user_count = 12;\n";
+            if ($_REQUEST['usr'] == 25) echo "user_count = 25;\n";
+            if ($_REQUEST['usr'] == "unlim") echo "user_count = 50;\n";
+            ?>
+            var pro_line = <?= $_REQUEST['line'] == "pro" ? 1 : 0 ?>;
+            var month_count = 1;
+            var price = parseFloat("[[описание из раздела]]/buy/a4/3");
+            var price_disc = parseFloat("[[описание 2 из раздела]]/buy/a4/3");
+            var price_online = parseFloat("[[описание 3 из раздела]]/buy/a4/3");
+
+
+            var pr = [];
+            pr[1] = parseFloat("[[описание из раздела]]/buy/a4/1");
+            pr[3] = parseFloat("[[описание из раздела]]/buy/a4/3");
+            pr[7] = parseFloat("[[описание из раздела]]/buy/a4/7");
+            pr[12] = parseFloat("[[описание из раздела]]/buy/a4/12");
+            pr[25] = parseFloat("[[описание из раздела]]/buy/a4/25");
+            pr[50] = parseFloat("[[описание из раздела]]/buy/a4/unlim");
+
+            var pr_disc = [];
+            pr_disc[1] = parseFloat("[[описание 2 из раздела]]/buy/a4/1");
+            pr_disc[3] = parseFloat("[[описание 2 из раздела]]/buy/a4/3");
+            pr_disc[7] = parseFloat("[[описание 2 из раздела]]/buy/a4/7");
+            pr_disc[12] = parseFloat("[[описание 2 из раздела]]/buy/a4/12");
+            pr_disc[25] = parseFloat("[[описание 2 из раздела]]/buy/a4/25");
+            pr_disc[50] = parseFloat("[[описание 2 из раздела]]/buy/a4/unlim");
+
+            var pr_online = [];
+            pr_online[1] = parseFloat("[[описание 3 из раздела]]/buy/a4/1");
+            pr_online[3] = parseFloat("[[описание 3 из раздела]]/buy/a4/3");
+            pr_online[7] = parseFloat("[[описание 3 из раздела]]/buy/a4/7");
+            pr_online[12] = parseFloat("[[описание 3 из раздела]]/buy/a4/12");
+            pr_online[25] = parseFloat("[[описание 3 из раздела]]/buy/a4/25");
+            pr_online[50] = parseFloat("[[описание 3 из раздела]]/buy/a4/unlim");
+
+            var pr_pro = [];
+            pr_pro[1] = parseFloat("[[описание 3 из раздела]]/buy/a4/1_pro");
+            pr_pro[3] = parseFloat("[[описание 3 из раздела]]/buy/a4/3_pro");
+            pr_pro[7] = parseFloat("[[описание 3 из раздела]]/buy/a4/7_pro");
+            pr_pro[12] = parseFloat("[[описание 3 из раздела]]/buy/a4/12_pro");
+            pr_pro[25] = parseFloat("[[описание 3 из раздела]]/buy/a4/25_pro");
+            pr_pro[50] = parseFloat("[[описание 3 из раздела]]/buy/a4/unlim_pro");
+
+            var now = new Date();
+
+            function checkInvite() {
+                var code = document.getElementById("k_input_field_6_1111").value;
+                if (code == '') {
+                    ShowCost(false);
+                    document.getElementById('message_6_1111').innerHTML = "";
+                }
+                else if (code == "TARIF7-7%" && now.getFullYear() == 2016 && now.getMonth() == 7 // 3 - это апрель, т.к. дебильный getMonth начинает с нуля
+                    && document.getElementById('k_input_field_6_1032').value == "7") { // временный вариант для конкретного промо-кода, в будущем заменить на удаленную проверку любых купонов
+                    var msg = 7;
+                    document.getElementById('message_6_1111').innerHTML = "Скидка по промо-коду — " + msg + "%";
+                    ShowCost(true, msg);
+                }
+                //else if(code == "kekus"){
+                    //document.getElementById('message_6_1111').innerHTML = "Скидка по промо-коду — " + 1 + "%";
+                    //ShowCost(true, 1);
+                //}
+                else {
+                    $.ajax({
+                        type: "POST",
+                        url: "https://invite.clientbase.ru/check_invite.php",
+                        data: {code: code},
+                        success: function (msg) {
+                            msg = parseInt(msg);
+                            if (msg > 0) {
+                                document.getElementById('message_6_1111').innerHTML = "Скидка по партнёрскому коду — " + msg + "%";
+                                ShowCost(true, msg);
+                            }
+                            else {
+                                document.getElementById('message_6_1111').innerHTML = "";
+                                ShowCost(false, 0);
+                            }
+                        }
+                    });
+                }
+            }
+
+            function ShowCost(partner, disc_sale) {
+                if ($('#k_input_field_6_1032').val() == 'неограниченно' || $('#k_input_field_6_1032').val() == 'неограниченно Pro') {
+                    user_count = 50;
+                } else if ($('#k_input_field_6_1032').val().slice(-4) == ' Pro') {
+                    user_count = $('#k_input_field_6_1032').val().slice(0, -4);
+                } else {
+                    user_count = $('#k_input_field_6_1032').val();
+                }
+                if ($('#k_input_field_6_1032').val().slice(-4) == ' Pro') {
+                    pro_line = 1;
+                } else {
+                    pro_line = 0;
+                }
+                var pay_type;
+                if (document.getElementById('sp_opl_robokassa').checked === true || document.getElementById('sp_opl_yandex').checked === true) {
+                    pay_type = 1;
+                } else if (document.getElementById('sp_opl_schet').checked === true) {
+                    pay_type = 2;
+                }
+                var price_nodisc;
+                var res_price;
+                var price = pr[user_count];
+                if (pr_disc[user_count]) {  /// Если заполнена цена со скидкой
+                    price_nodisc = (month_count * price).toFixed(0);
+                    price = pr_disc[user_count];
+                }
+                if (pr_online[user_count] != price) {
+                    price_nodisc = (month_count * pr[user_count]).toFixed(0);
+                    price = pr_online[user_count];
+                }
+                if (pro_line) {
+                    price = pr_pro[user_count];
+                }
+                if(disc_sale >=0 && disc_sale < 100){
+                    price = price - ((disc_sale / 100) * price);
+                }
+
+                //if (disc_sale == 5) price = price - (0.05 * price);
+                //if (disc_sale == 6) price = price - (0.06 * price);
+                //if (disc_sale == 7) price = price - (0.07 * price);
+                //if (disc_sale == 8) price = price - (0.08 * price);
+                //if (disc_sale == 9) price = price - (0.09 * price);
+                //if (disc_sale == 10) price = price - (0.10 * price);
+                //if (disc_sale == 25) price = price - (0.25 * price);
+
+                res_price = (month_count * price).toFixed(0);
+                $('#price_nodisc_outer').addClass('hidden');
+                $('#price_outer').addClass('hidden');
+
+                /*if (price_nodisc) {
+                    $('#price_nodisc_outer').removeClass('hidden');
+                    document.getElementById("price_nodisc_inner").innerHTML = price_nodisc;
+                    document.getElementById("k_input_field_6_1034").value = res_price;
+                }*/
+                console.log(res_price);
+                if (res_price) {
+                    $('#price_outer').removeClass('hidden');
+                    document.getElementById("k_input_field_6_1034_1").innerHTML = res_price;
+                    document.getElementById("k_input_field_6_1034").value = res_price;
+                }
+                return;
+            }
+
+            checkInvite();
+
+            $("#sp_opl_schet").click(function () {
+                checkInvite();
+            });
+            $("#sp_opl_robokassa").click(function () {
+                checkInvite();
+            });
+            $("#sp_opl_yandex").click(function () {
+                checkInvite();
+            });
+            $(".jq-selectbox__dropdown li").click(function () {
+                if ($(this).html() == "1") user_count = 1;
+                else if ($(this).html().indexOf("до 3") == 0) user_count = 3;
+                else if ($(this).html().indexOf("до 7") == 0) user_count = 7;
+                else if ($(this).html().indexOf("до 12") == 0) user_count = 12;
+                else if ($(this).html().indexOf("до 25") == 0) user_count = 25;
+                else if ($(this).html().indexOf("Неогр") == 0) user_count = 50;
+                checkInvite();
+            });
+
+            $("#k_input_field_6_1111").change(function () {
+                checkInvite();
+            });
+
+            $("#k_input_field_6_1111").blur(function () {
+                checkInvite();
+            });
+
+            $("#k_input_field_6_1111").focus(function () {
+                checkInvite();
+            });
+            $("#k_input_field_6_1032").change(function () {
+                ShowCost(true, $('#k_input_field_6_1032').val())
+            });
+        }, 1000);
+
+
+    </script>
+
+    <script>
+        var last_timeout = 0;
+        function check_email() {
+            last_timeout = 0;
+            var ch_email = document.getElementById("k_input_field_6_1031").value;
+            var res_email = (/^([a-z0-9_-]+.)*[a-z0-9_-]+@([a-z0-9][a-z0-9-]*[a-z0-9].)+[a-z]{2,4}$/i).test(ch_email);
+            var res_good = 0;
+            var val_email;
+
+            if (ch_email.length == 0) {
+                document.getElementById('message_6_1031').style.display = "block";
+                document.getElementById('message_6_1031').style.color = "red";
+                document.getElementById('message_6_1031').innerHTML = "Вы не ввели e-mail";
+            }
+            else if (!res_email) {
+                document.getElementById('message_6_1031').style.display = "block";
+                document.getElementById('message_6_1031').style.color = "red";
+                document.getElementById('message_6_1031').innerHTML = "Неверный e-mail";
+            }
+            else if (ch_email.length > 2 && ch_email != "name@email.ru") {
+                document.getElementById('message_6_1031').style.display = "block";
+                document.getElementById('message_6_1031').style.color = "green";
+                document.getElementById('message_6_1031').innerHTML = "E-mail корректен";
+                res_good = 1;
+
+
+                if (!val_email) {
+                    val_email = '&email=' + ch_email;
+                    return val_email;
+                }
+            }
+            else {
+                document.getElementById('message_6_1031').innerHTML = "";
+            }
+
+            if (res_good == 0) {
+                return "err";
+            }
+        }
+
+        function a1() {
+            if (last_timeout) clearTimeout(last_timeout);
+            clearTimeout = setTimeout(check_email, 30000);
+        }
+
+        function send_ajax(url, param, async = false)
+        {
+            if (async !== true) {
+                async = false;
+            }
+            return $.ajax({
+                url: url,
+                async: async,
+                type: "POST",
+                data: param
+            }).responseText;
+        }
+
+        function check_daily_reg(mail)
+        {
+            if (!mail) {
+                return 'invalid mail';
+            }
+            var params = {
+                'ajax': true,
+                'check_mail': mail,
+            };
+            var response = send_ajax('', params);
+            if (response !== 'ok') {
+                if (response !== 'limit over') {
+                    response = 'ok';
+                }
+            }
+
+            return response;
+        }
+
+        var k_form_rand_6 = Math.random() + "_" + (new Date()).getTime(); // Уникальный id формы, используется в файлах и для получения ответа анкеты
+        var k_upload_in_progress = 0;
+        var k_answer_hide_form6 = 1;
+        var k_was_submited6 = 0;
+
+        function custom_save_qst6() {
+            var error_message = false;
+            var val;
+
+            val = document.getElementById('k_input_field_6_1075').value;
+            if (!val || val == "ПромЭнергоСвязь  ") {
+                error_message = true;
+                document.getElementById('message_6_1075').innerHTML = "Пожалуйста, укажите название организации";
+                document.getElementById('k_savebutton6').disabled = '';
+                k_was_submited6 = 0;
+            }
+            else {
+                document.getElementById('message_6_1075').innerHTML = "";
+            }
+
+            val = document.getElementById('k_input_field_6_1031').value;
+            if (!val || val == "name@email.ru" || check_email() == "err" || (document.getElementById('message_6_1031').innerHTML != "" && document.getElementById('message_6_1031').style.color != "green")) {
+                error_message = true;
+                document.getElementById('message_6_1031').innerHTML = "Некорректный e-mail";
+                document.getElementById('k_savebutton6').disabled = '';
+                k_was_submited6 = 0;
+            } else if (check_daily_reg(val) !== 'ok') {
+                error_message = true;
+                k_was_submited6 = 0;
+                document.getElementById('message_6_1031').innerHTML = "Вы исчерпали лимит на сегодня";
+                document.getElementById('message_6_1031').style.color = "red";
+                document.getElementById('k_savebutton6').disabled = '';
+            } else {
+                document.getElementById('message_6_1031').innerHTML = "";
+            }
+
+            val = document.getElementById('k_input_field_6_1035').value;
+            if (!val || val == "Иванов Иван Иванович  ") {
+                error_message = true;
+                document.getElementById('message_6_1035').innerHTML = "Пожалуйста, укажите Ф.И.О. контактного лица";
+                document.getElementById('k_savebutton6').disabled = '';
+                k_was_submited6 = 0;
+            }
+            else {
+                document.getElementById('message_6_1035').innerHTML = "";
+            }
+
+            val = document.getElementById('k_input_field_6_1036').value;
+            if (!val || val == "(495) 234-57-89  ") {
+                error_message = true;
+                document.getElementById('message_6_1036').innerHTML = "Пожалуйста, укажите Ваш номер телефона";
+                document.getElementById('k_savebutton6').disabled = '';
+                k_was_submited6 = 0;
+            }
+            else {
+                document.getElementById('message_6_1036').innerHTML = "";
+            }
+
+            val = document.getElementById('k_input_field_6_1072').value;
+
+            if (document.getElementById('sp_opl_schet').checked) { // Безналичная оплата
+                if (document.getElementById('k_input_field_6_1039').checked) { // Получать отчетные документы
+                    val = document.getElementById('k_input_field_6_1038').value;
+                    if (!val || val == "ООО «ПромЭнергоСвязь»  ") {
+                        error_message = true;
+                        document.getElementById('message_6_1038').innerHTML = "Пожалуйста, укажите название компании";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1038').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1040').value;
+                    if (!val || val == "40802810431000000006  ") {
+                        error_message = true;
+                        document.getElementById('message_6_1040').innerHTML = "Пожалуйста, укажите рассчетный счет";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1040').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1041').value;
+                    if (!val || val == "780803433133  ") {
+                        error_message = true;
+                        document.getElementById('message_6_1041').innerHTML = "Пожалуйста, укажите ИНН";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1041').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1042').value;
+                    if (!val || val == "780803431  ") {
+                        error_message = true;
+                        document.getElementById('message_6_1042').innerHTML = "Пожалуйста, укажите КПП";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1042').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1043').value;
+                    if (!val || val == "ОАО «Сбербанк России»  ") {
+                        error_message = true;
+                        document.getElementById('message_6_1043').innerHTML = "Пожалуйста, укажите Банк";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1043').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1044').value;
+                    if (!val || val == "044515225  ") {
+                        error_message = true;
+                        document.getElementById('message_6_1044').innerHTML = "Пожалуйста, укажите БИК";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1044').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1045').value;
+                    if (!val || val == "30101810100000000225  ") {
+                        error_message = true;
+                        document.getElementById('message_6_1045').innerHTML = "Пожалуйста, укажите Кор. счет";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1045').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1046').value;
+                    if (!val || val == "Иванова Ивана Ивановича  ") {
+                        error_message = true;
+                        document.getElementById('message_6_1046').innerHTML = "Пожалуйста, укажите Ф.И.О. руководителя";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1046').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1047').value;
+                    if (!val) {
+                        error_message = true;
+                        document.getElementById('message_6_1047').innerHTML = "Пожалуйста, укажите должность руководителя";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1047').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1048').value;
+                    if (!val) {
+                        error_message = true;
+                        document.getElementById('message_6_1048').innerHTML = "Пожалуйста, заполните поле";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1048').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_2851').value;
+                    if (!val || val == "Иванов И.И.  ") {
+                        error_message = true;
+                        document.getElementById('message_6_2851').innerHTML = "Пожалуйста, укажите ФИО для подписи";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_2851').innerHTML = "";
+                    }
+
+                    val = document.getElementById('k_input_field_6_1049').value;
+                    if (!val || val == "г.Москва, пр.Победы, д.1  ") {
+                        error_message = true;
+                        document.getElementById('message_6_1049').innerHTML = "Пожалуйста, укажите юридический адрес";
+                        document.getElementById('k_savebutton6').disabled = '';
+                        k_was_submited6 = 0;
+                    }
+                    else {
+                        document.getElementById('message_6_1049').innerHTML = "";
+                    }
+                }
+                else {
+                    document.getElementById('k_input_field_6_1038').value = "";
+                    document.getElementById('k_input_field_6_1039').value = "";
+                    document.getElementById('k_input_field_6_1040').value = "";
+                    document.getElementById('k_input_field_6_1041').value = "";
+                    document.getElementById('k_input_field_6_1042').value = "";
+                    document.getElementById('k_input_field_6_1043').value = "";
+                    document.getElementById('k_input_field_6_1044').value = "";
+                    document.getElementById('k_input_field_6_1045').value = "";
+                    document.getElementById('k_input_field_6_1046').value = "";
+                    document.getElementById('k_input_field_6_1047').value = "";
+                    document.getElementById('k_input_field_6_1048').value = "";
+                    document.getElementById('k_input_field_6_2851').value = "";
+                    document.getElementById('k_input_field_6_1049').value = "";
+                }
+            }
+            else { // Онлайн оплата
+                document.getElementById('k_input_field_6_1038').value = "";
+                document.getElementById('k_input_field_6_1039').value = "";
+                document.getElementById('k_input_field_6_1040').value = "";
+                document.getElementById('k_input_field_6_1041').value = "";
+                document.getElementById('k_input_field_6_1042').value = "";
+                document.getElementById('k_input_field_6_1043').value = "";
+                document.getElementById('k_input_field_6_1044').value = "";
+                document.getElementById('k_input_field_6_1045').value = "";
+                document.getElementById('k_input_field_6_1046').value = "";
+                document.getElementById('k_input_field_6_2851').value = "";
+                document.getElementById('k_input_field_6_1047').value = "";
+                document.getElementById('k_input_field_6_1048').value = "";
+                document.getElementById('k_input_field_6_1049').value = "";
+            }
+
+            if (error_message) return 0;
+            return 1;
+        }
+
+        function k_save_qst6() {
+            //yaCounter19963723.reachGoal('licenseApp');
+
+
+            var page_charset = window.document.charset;
+            if (!page_charset) page_charset = window.document.characterSet;
+
+            if (typeof(custom_save_qst6) == 'function') {
+                if (!custom_save_qst6()) return;
+            }
+
+            if (k_was_submited6) return;
+            k_was_submited6 = 1;
+            document.getElementById('k_savebutton6').disabled = true;
+            var qst_form = document.createElement("form");
+            qst_form.setAttribute('enctype', 'multipart/form-data');
+            qst_form.setAttribute('action', '//mstl.clientbase.ru/questionare.php?page_charset=' + page_charset + '&ts' + new Date().getTime());
+            qst_form.setAttribute('target', 'k_frame_upload_6');
+            qst_form.setAttribute('method', 'post');
+            document.body.appendChild(qst_form);
+            var qst_input;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1031');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1031').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1032');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1032').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1034');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1034').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1035');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1035').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1036');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1036').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1037');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1037').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1038');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1038').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1039');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1039').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1040');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1040').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1041');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1041').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1042');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1042').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1043');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1043').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1044');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1044').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1045');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1045').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1046');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1046').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1047');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1047').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1048');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1048').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_2851');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_2851').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1049');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1049').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1072');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1072').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1075');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1075').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_input_field_6_1111');
+            qst_form.appendChild(qst_input);
+            qst_input.value = document.getElementById('k_input_field_6_1111').value;
+            qst_input = document.createElement('input');
+            qst_input.setAttribute('type', 'hidden');
+            qst_input.setAttribute('name', 'k_rand_6');
+            qst_form.appendChild(qst_input);
+            qst_input.value = k_form_rand_6;
+
+            // UTM
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_6_5161');qst_form.appendChild(qst_input);
+    qst_input.value=utmArray.utmcsr;
+
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_6_5171');qst_form.appendChild(qst_input);
+    qst_input.value=utmArray.utmcct;
+
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_6_5181');qst_form.appendChild(qst_input);
+    qst_input.value=utmArray.utmccn;
+
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_6_5191');qst_form.appendChild(qst_input);
+    qst_input.value=utmArray.utmctr;
+
+            qst_form.submit();
+            window.scrollTo(0, 0);
+            document.body.removeChild(qst_form);
+
+        }
+
+        function k_save_resp6(event) {
+            if (document.getElementById('k_frame_upload_6').src == '') return;
+
+            if (document.getElementById('k_frame_upload_6').getAttribute('second_load')) {
+                if (!k_was_submited6) return; // Тетья степень защиты от повторной отправки
+                k_was_submited6 = 0;
+                document.getElementById('k_savebutton6').disabled = false;
+                if (typeof(custom_qst_res6) == 'function') {
+                    custom_qst_res6();
+                }
+                else {
+                    // Получаем результат формы
+                    var ss = document.createElement('script');
+                    ss.src = "//mstl.clientbase.ru/questionare.php?sel=get_answer&qst_id=6&k_rand=" + k_form_rand_6;
+                    var done = false;
+                    ss.onload = ss.onreadystatechange = function () {
+                        if (!done && (!this.readyState || this.readyState === "loaded" || this.readyState === "complete")) {
+                            done = true;
+                            eval("var data=k_answer6;delete k_answer6;");
+                            if (data.length) {
+                                document.getElementById('k_qst_res_6').innerHTML = data;
+                                if (document.getElementById('paid_form')) window.setTimeout(function () {
+                                    document.getElementById('paid_form').submit()
+                                }, 10);
+                                if (document.getElementById('robo_form')) window.setTimeout(function () {
+                                    document.getElementById('robo_form').submit()
+                                }, 1000);
+                                if (document.getElementById('payyandex_form')) window.setTimeout(function () {
+                                    document.getElementById('payyandex_form').submit()
+                                }, 1000);
+                            }
+                            else {
+                                window.scrollTo(0, 0);
+                                document.querySelector('.content').setAttribute('style', 'font-size: 18px; text-align: center; color: rgb(115, 124, 135)');
+                                document.querySelector('.content').innerHTML = 'Ваша заявка принята. Спасибо. Лицензионный ключ придет на указанную Вами почту.<br> Скачать дистрибутив установки Вы можете здесь: <a href="https://clientbase.ru/download/" style="color: blue; font-size: 18px;">скачать</a>';
+                            }
+                            if (k_answer_hide_form6) {
+                                document.getElementById('k_qst_6').style.display = 'none';
+                                //location.href = '#qst_res_link6'; В рамках задания #71222 решено было вместо переадресации выводить сообщение
+                                $('#k_qst_res_6').text('Спасибо за регистрацию! В ближайшее время с Вами свяжется Ваш персональный менеджер.');
+                                window.scrollTo(0, 0);
+                            }
+
+                            ss.onload = ss.onreadystatechange = null;
+                            document.body.removeChild(ss);
+                        }
+                    };
+                    document.body.appendChild(ss);
+                }
+                // Убираем результат фрейма
+                document.getElementById('k_frame_upload_6').src = '';
+            }
+            else
+                document.getElementById('k_frame_upload_6').setAttribute('second_load', 1);
+        }
+
+        function receive_docs_click() {
+            if (document.getElementById('k_input_field_6_1039').checked) {
+                document.getElementById('k_input_field_6_1039').value = "1";
+                document.getElementById('PayDetails').style.display = 'block';
+            }
+            else {
+                document.getElementById('PayDetails').style.display = 'none';
+            }
+        }
+    </script>
+
+    <iframe name="k_frame_upload_6" id="k_frame_upload_6" style='width:1px;height:1px;display:none;'
+            onload='k_save_resp6(event);'></iframe>
+    <script>
+        document.getElementById('k_frame_upload_6').src = '';
+    </script>
+    <style>
+        #tour .block .content {
+            width: 1085px;
+            margin-top: 100px;
+        }
+
+        #create_account .create_form .block {
+            max-width: 1085px;
+            overflow: hidden;
+            background-color: #faf7eb;
+        }
+
+        #create_account .create_form .block .left {
+            padding: 50px;
+            padding-top: 40px;
+        }
+
+        #create_account .create_form .block .left form .jq-selectbox .jq-selectbox__select, #create_account .create_form .block .right form .jq-selectbox .jq-selectbox__select {
+            width: 300px;
+        }
+
+        .title {
+            margin-right: 0 !important;
+            padding-top: 15px;
+            margin-left: 20px !important;
+        }
+
+        p.title.rub {
+            margin-left: 5px !important;
+        }
+
+        #create_account .create_form .block .left form, #create_account .create_form .block .right form {
+            padding-top: 25px;
+        }
+
+        .p12 {
+            text-align: left !important;
+        }
+
+        .pay-icons {
+            padding-top: 10px;
+        }
+
+        .p13 {
+            float: left;
+            font-size: 13px;
+        }
+
+        #create_account .create_form .block .right ul {
+            padding-left: 65px;
+        }
+
+        #create_account {
+            top: 0;
+        }
+
+        .col-xs-4 {
+            width: 33.33333333% !important;
+        }
+
+        .col-xs-8 {
+            width: 66.66666667% !important;
+        }
+
+        #tour .block .content > div {
+            border-bottom: 0;
+        }
+
+        #tour {
+            margin-bottom: 60px;
+        }
+
+        #create_account .create_form .block .right ul li:before {
+            left: -40px;
+        }
+
+        #tour {
+            margin-bottom: -70px;
+        }
+
+        #create_account .create_form .block .left form input[type="text"], #create_account .create_form .block .right form input[type="text"] {
+            margin-top: 9px;
+        }
+
+        #tour .block .content .title {
+            line-height: 0;
+        }
+
+      .licience__hidden {
+         display: none;
+      }
+
+      .advantage--orange::before, .main__adv li:last-child {
+          filter: hue-rotate(300deg);
+      }
+
+      .flex-wrap-block {
+          flex-wrap: wrap;
+      }
+
+      .hr__red {
+          margin-bottom: 7px;
+      }
+
+      .data-input__info {
+          color: red;
+          font-size: 11px;
+          padding: 0 35px;
+          margin-bottom: 15px;
+      }
+
+      #tour .block .content p.price__additionalInfo {
+           margin-left: 7%;
+           color: #99d757;
+      }
+
+     #k_qst_res_6 {
+        text-align: center;
+     }
+
+     #clients {
+        min-height: 330px;
+     }
+
+     p.new-year-sale {
+       display: none;
+       justify-content: center;
+       align-items: center;
+       width: 100%;
+       height: 40px;
+       text-align: center;
+       color: #99d757 !important;
+       font-size: 16px !important;
+     }
+
+     @media (max-width: 768px) {
+           #tour .block .content p.price__additionalInfo {
+               margin-left: auto;
+           }
+     }
+    </style>
+    <div id='create_account' class='buy-account'>
+        <div class='content'>
+            <div class='create_form wow fadeInUp' data-wow-delay='0.3s' data-wow-duration='1s'>
+                <div class='k_qst_div_6'>
+                    <div align="center" style="color:red; padding-bottom:15px;" id="k_qst_err_res_6"></div>
+                    <div class='row block clearfix' id='k_qst_6'>
+                        <div class="col-xs-8 left">
+                            <form>
+                                <div class='row' style="margin-bottom:15px;">
+                                    <div class="col-xs-6 sel1">
+                                        <p>Тариф</p>
+                                        <select data-placeholder="Количество пользователей"
+                                                class='select_styler dropDown' id='k_input_field_6_1032' value=''>
+                                            <option value="1"
+                                                    data-html-text="1" <?php if ($_REQUEST['usr'] == 1 && $_REQUEST['line'] != "pro") echo "selected='selected'"; ?>>
+                                                Тариф 1
+                                            </option>
+                                            <option value="3"
+                                                    data-html-text="до 3" <?php if ($_REQUEST['usr'] == 3 && $_REQUEST['line'] != "pro") echo "selected='selected'"; ?>>
+                                                Тариф 3
+                                            </option>
+                                            <option value="7"
+                                                    data-html-text="до 7" <?php if ($_REQUEST['usr'] == 7 && $_REQUEST['line'] != "pro") echo "selected='selected'"; ?>>
+                                                Тариф 7
+                                            </option>
+                                            <option value="12"
+                                                    data-html-text="до 12" <?php if (($_REQUEST['usr'] == 12 && $_REQUEST['line'] != "pro") or !$_REQUEST['usr']) echo "selected='selected'"; ?>>
+                                                Тариф 12
+                                            </option>
+                                            <option value="25"
+                                                    data-html-text="до 25" <?php if ($_REQUEST['usr'] == 25 && $_REQUEST['line'] != "pro") echo "selected='selected'"; ?>>
+                                                Тариф 25
+                                            </option>
+                                            <option value="неограниченно"
+                                                    data-html-text="Неограниченно" <?php if ($_REQUEST['usr'] == 'unlim' && $_REQUEST['line'] != "pro") echo "selected='selected'"; ?>>
+                                                Premium
+                                            </option>
+                                            <option value="1 Pro"
+                                                    data-html-text="1" <?php if ($_REQUEST['usr'] == 1 && $_REQUEST['line'] == "pro") echo "selected='selected'"; ?>>
+                                                Тариф 1 Pro
+                                            </option>
+                                            <option value="3 Pro"
+                                                    data-html-text="до 3" <?php if ($_REQUEST['usr'] == 3 && $_REQUEST['line'] == "pro") echo "selected='selected'"; ?>>
+                                                Тариф 3 Pro
+                                            </option>
+                                            <option value="7 Pro"
+                                                    data-html-text="до 7" <?php if ($_REQUEST['usr'] == 7 && $_REQUEST['line'] == "pro") echo "selected='selected'"; ?>>
+                                                Тариф 7 Pro
+                                            </option>
+                                            <option value="12 Pro"
+                                                    data-html-text="до 12" <?php if ($_REQUEST['usr'] == 12 && $_REQUEST['line'] == "pro") echo "selected='selected'"; ?>>
+                                                Тариф 12 Pro
+                                            </option>
+                                            <option value="25 Pro"
+                                                    data-html-text="до 25" <?php if ($_REQUEST['usr'] == 25 && $_REQUEST['line'] == "pro") echo "selected='selected'"; ?>>
+                                                Тариф 25 Pro
+                                            </option>
+                                            <option value="неограниченно Pro"
+                                                    data-html-text="Неограниченно" <?php if ($_REQUEST['usr'] == 'unlim' && $_REQUEST['line'] == "pro") echo "selected='selected'"; ?>>
+                                                Premium Pro
+                                            </option>
+                                        </select>
+                                        <div class="message" id="message_6_6032"></div>
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <p>Код партнёра / Промо-код</p>
+                                        <p class="message" id="message_6_1111" style="color: green; top: 27px;"></p>
+                                        <input type='text' id='k_input_field_6_1111'
+                                               value="<?php echo $_COOKIE['partner_id']; ?>" maxlength="50">
+                                    </div>
+                                </div>
+                                <div class='row'>
+                                    <div class="col-xs-6 flex-row flex-wrap-block">
+                                        <p class='title'>Итого:</p>
+                                        <div class="price_nodisc flex-row" id="price_nodisc_outer"
+                                             style="text-decoration:line-through">
+                                            <p class='title' id="price_nodisc_inner">36450</p>
+                                            <p class='title rub'>руб.</p>
+                                        </div>
+                                        <div class="price flex-row" id="price_outer">
+                                            <p class='title' id='k_input_field_6_1034_1'>25515</p>
+                                            <p class='title rub'>руб.</p>
+                                            <input type="hidden" class="formText" id='k_input_field_6_1034'>
+                                        </div>
+                                        <p class='price__additionalInfo'>Цена по окончании 14 дней</p>
+                                    </div>
+                                    <div class="col-xs-6 flex-row" style="min-height: auto">
+                                    </div>
+                                </div>
+                                <hr class="hr__red">
+                                <div class='row' style="margin-bottom:15px;">
+                                    <div class="col-xs-6">
+                                        <p>Название организации <span class="star">*</span></p>
+                                        <div class="message" id="message_6_1075" style="top: 27px;"></div>
+                                        <input type='text' id='k_input_field_6_1075' placeholder="ПромЭнергоСвязь  ">
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <p>Адрес электронной почты <span class="star">*</span></p>
+                                        <div class="message" id="message_6_1031" style="top: 27px;"></div>
+                                        <input type='text' id='k_input_field_6_1031' placeholder="name@email.ru"
+                                               maxlength="50" onkeydown="a1()" onblur="check_email()">
+                                    </div>
+                                </div>
+                                <div class='row' style="margin-bottom:25px;">
+                                    <div class="col-xs-6">
+                                        <p>Ф.И.О. контактного лица <span class="star">*</span></p>
+                                        <div class="message" id="message_6_1035" style="top: 27px;"></div>
+                                        <input type='text' id='k_input_field_6_1035'
+                                               placeholder="Иванов Иван Иванович  ">
+                                    </div>
+                                    <div class="col-xs-6">
+                                        <p>Номер телефона <span class="star">*</span></p>
+                                        <div class="message" id="message_6_1036" style="top: 27px;"></div>
+                                        <input type='text' id='k_input_field_6_1036' placeholder="(495) 234-57-89  ">
+                                    </div>
+                                </div>
+                                <div class='row' style="display:none">
+                                    <div class="col-xs-6">
+                                        <p>Подпись отправителя СМС <span class="star">**</span></p>
+                                        <div class="message" id="message_6_1072"></div>
+                                        <input type='text' id='k_input_field_6_1072' placeholder="ПромЭнергоСвязь  ">
+                                    </div>
+                                </div>
+                                <div>
+                                    <p></p>
+                                </div>
+                                <div class='row licience__hidden'>
+                                    <div class="col-xs-12">
+                                        <p class='title'>Платежная информация</p>
+                                    </div>
+                                </div>
+                                <div class='row licience__hidden'>
+                                    <div class="col-xs-6 flex-col">
+                                        <p style="text-align: left; margin-left: 10px;" class='subtitle-title black'>
+                                            Онлайн оплата</p>
+                                        <p></p>
+                                        <div class='flex-row'>
+                                            <input type="radio" name="b1" id="sp_opl_yandex" value="яндекс-оплата"
+                                                onclick="document.getElementById('nonCashPay').style.display='none';
+                                                document.getElementById('k_input_field_6_1037').value='яндекс-оплата';" checked>
+                                            <p style="margin-left: 10px;" class='subtitle-title black'>Яндекс-касса</p>
+                                        </div>
+                                        <div class='flex-row'>
+                                            <input type="radio" name="b1" id="sp_opl_robokassa" value="онлайн-оплата"
+                                                onclick="document.getElementById('nonCashPay').style.display='none';
+                                                document.getElementById('k_input_field_6_1037').value='онлайн-оплата';">
+                                            <p style="margin-left: 10px;" class='subtitle-title black'>Робокасса</p>
+                                        </div>
+                                        <div class="flex-row pay-icons">
+                                            <img width="23" height="28" onclick="" alt=""
+                                                 src="//clientbase.ru/buy/buy_license/yandex.png">
+                                            <img width="26" height="27" onclick="" alt=""
+                                                 src="//clientbase.ru/buy/buy_license/webmoney.png">
+                                            <img width="19" height="20" onclick="" alt=""
+                                                 src="//clientbase.ru/buy/buy_license/money_mail_ru.png">
+                                            <img width="26" height="27" onclick="" alt=""
+                                                 src="//clientbase.ru/buy/buy_license/rbk.png">
+                                            <img width="31" height="20" onclick="" alt=""
+                                                 src="//clientbase.ru/buy/buy_license/mastercard.png">
+                                            <img width="39" height="13" onclick="" alt=""
+                                                 src="//clientbase.ru/buy/buy_license/visa.png">
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-6 flex-col">
+                                        <p></p>
+                                        <p></p>
+                                        <div class='flex-row'>
+                                            <input type="radio" name="b1" id="sp_opl_schet" value="безналичная оплата"
+                                                   onclick="document.getElementById('nonCashPay').style.display='block';
+                                           document.getElementById('k_input_field_6_1037').value='безналичная оплата';">
+                                            <p style="margin-left: 10px;" class='subtitle-title black'>Безналичная
+                                                оплата</p>
+                                        </div>
+                                        <p class="p12">Выпишите счет и оплатите
+                                            <br> в любом банке.</p>
+                                        <input type="hidden" id="k_input_field_6_1037" value="яндекс-оплата">
+                                    </div>
+                                </div>
+                                <div>
+                                    <p></p>
+                                </div>
+                                <div class='row display_none' id="nonCashPay">
+                                    <div class="col-xs-12">
+                                        <div class='flex-row'>
+
+                                            <input type="checkbox" name="k_input_field_6_1039" value=""
+                                                   id="k_input_field_6_1039" class="inpCheckbox"
+                                                   onclick="receive_docs_click()">
+                                            <p style="margin-left: 10px;" class='subtitle-title black'>Получать отчетные
+                                                документы</p>
+                                        </div>
+                                        <p class="p12">Для получения отчетных документов, необходимо указать реквизиты
+                                            компании.</p>
+                                    </div>
+                                </div>
+                                <div id="PayDetails" style="display:none">
+                                    <div>
+                                        <p></p>
+                                    </div>
+                                    <hr>
+                                    <div class='row'>
+                                        <div class="col-xs-6">
+                                            <p>Название компании <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1038'
+                                                   placeholder="ООО «ПромЭнергоСвязь»  ">
+                                            <div class="message" id="message_6_1038"></div>
+                                            <p></p>
+                                            <p>Юридический адрес <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1049'
+                                                   placeholder="г.Москва, пр.Победы, д.1  ">
+                                            <div class="message" id="message_6_1049"></div>
+                                        </div>
+                                        <div class="col-xs-6">
+                                            <p>ИНН <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1041' placeholder="780803433133  ">
+                                            <div class="message" id="message_6_1041"></div>
+                                            <p></p>
+                                            <p>КПП <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1042' placeholder="780803431  ">
+                                            <div class="message" id="message_6_1042"></div>
+                                        </div>
+                                    </div>
+                                    <div class='row'>
+                                        <div class="col-xs-6">
+                                            <p></p>
+                                            <p>Рассчетный счет <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1040'
+                                                   placeholder="40802810431000000006  ">
+                                            <div class="message" id="message_6_1040"></div>
+                                            <p></p>
+                                            <p>Банк <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1043'
+                                                   placeholder="ОАО «Сбербанк России»  ">
+                                            <div class="message" id="message_6_1043"></div>
+                                        </div>
+                                        <div class="col-xs-6">
+                                            <p></p>
+                                            <p>БИК <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1044' placeholder="044515225  ">
+                                            <div class="message" id="message_6_1044"></div>
+                                            <p></p>
+                                            <p>Кор. счет <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1045'
+                                                   placeholder="30101810100000000225  ">
+                                            <div class="message" id="message_6_1045"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p></p>
+                                    </div>
+                                    <div class='row'>
+                                        <div class="col-xs-12">
+                                            <p style="text-align: left; margin-left: 10px;"
+                                               class='subtitle-title black'>Данные для договора</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p></p>
+                                    </div>
+                                    <div class='row'>
+                                        <div class="col-xs-6">
+                                            <p>В лице <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1047' placeholder="директора"
+                                                   style="color:#333">
+                                            <div class="message" id="message_6_1047"></div>
+                                            <p></p>
+                                            <p>ФИО руководителя (в род. падеже)<span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1046'
+                                                   placeholder="Иванова Ивана Ивановича  ">
+                                            <div class="message" id="message_6_1046"></div>
+                                        </div>
+                                        <div class="col-xs-6">
+                                            <p>действующего на основании <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_1048' placeholder="Устава"
+                                                   style="color:#333">
+                                            <div class="message" id="message_6_1048"></div>
+                                            <p></p>
+                                            <p>ФИО для подписи <span class="star">*</span></p>
+                                            <input type='text' id='k_input_field_6_2851' placeholder="Иванов И.И.  ">
+                                            <div class="message" id="message_6_2851"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p></p>
+                                </div>
+                                <hr>
+                                <div class='row'>
+                                    <div class="col-xs-8 flex-col">
+                                        <p></p>
+                                        <p></p>
+                                        <p class="p12">Нажимая кнопку «Промо на 14 дней», я принимаю условия <a
+                                                    href="https://clientbase.ru/offer.pdf">договора-оферты</a> и <a
+                                                    href="https://clientbase.ru/agreement_buy.pdf">даю свое согласие</a>
+                                            на обработку моих персональных данных в соответствии с Федеральным законом
+                                            от 27.07.2006 года №152-ФЗ «О персональных данных».</p>
+                                    </div>
+                                    <div class="col-xs-4 flex-col">
+                                        <input type="submit" id='k_savebutton6'
+                                               onclick='if (k_upload_in_progress) alert("Файл еще не загружен, дождитесь загрузки файла."); else { k_save_qst6(); } return false;'
+                                               value="Промо на 14 дней">
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class='right col-xs-4'>
+                            <div class='main__adv'>[[основные преимущества покупки]]</div>
+                        </div>
+                    </div>
+                    <a name="qst_res_link6"></a>
+                    <div class=k_result_text id='k_qst_res_6'></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php
+}
+?>

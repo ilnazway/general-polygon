@@ -1,0 +1,50 @@
+<script>
+window.onload = () => {
+  if (document.documentElement.clientWidth < 960) {
+
+    // const shadowStyle = document.createElement('style');
+    // style.type = 'text/css';
+
+    const wazzupWidget = document.querySelector('pf-widget');
+    const interiorWidget = wazzupWidget.shadowRoot.querySelector('.pfWidget');
+    const innerWidget = wazzupWidget.shadowRoot.querySelector('.pfWidgetInner');
+    // const btnicons = wazzupWidget.shadowRoot.querySelectorAll('.pfWidgetBtn');
+
+    const shadowStyle = /*html*/`
+      <style>
+        .limitation-size {
+          width: 45px !important;
+          height: 45px !important;
+        }
+      </style>
+    `;
+
+    interiorWidget.insertAdjacentHTML('beforebegin', shadowStyle)
+
+    interiorWidget.classList.add('limitation-size');
+    innerWidget.classList.add('limitation-size');
+
+    const wazzupIcons = wazzupWidget.shadowRoot.querySelectorAll('.pfWidgetBtnWrap');
+
+    for (let elem of wazzupIcons) {
+      iconSize(elem);
+      elem.querySelector('.pfWidgetBtn').style.cssText = 'width: 100% !important; height: 100% !important;';
+      elem.querySelector('.pfWidgetIcon').style.cssText = 'height: 60% !important;';
+    };
+
+    function iconSize(elem) {
+      elem.style.cssText = 'width: 45px; height: 45px;';
+    }
+
+    document.querySelector('pf-widget').shadowRoot.querySelector('.pfWidget').style.cssText = 'width: 45px; height: 45px;';
+    document.querySelector('pf-widget').shadowRoot.querySelector('.pfWidgetInner').style.cssText = 'width: 45px; height: 45px;';
+    document.querySelector('pf-widget').shadowRoot.querySelector('.pfWidgetBtnWrap').style.cssText = 'width: 45px; height: 45px;';
+    document.querySelector('pf-widget').shadowRoot.querySelector('.pfWidgetBtnBorder').style.cssText = 'width: 45px; height: 45px;';
+
+    document.querySelector('pf-widget').shadowRoot.querySelector('.pfWidgetBtn').style.cssText = 'width: 43px; height: 43px;';
+    document.querySelector('pf-widget').shadowRoot.querySelector('.pfWidgetIcon').style.cssText = 'width: 56%;';
+
+    document.querySelector('pf-widget').shadowRoot.querySelector('.pfWidgetBtnWave').style.cssText = 'width: 70%; height: 70%; margin: auto;';
+  }
+}
+</script>

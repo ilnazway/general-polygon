@@ -1,0 +1,303 @@
+<table cellspacing="0">
+	<tbody>
+		<tr>
+			<td colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R0">
+			<td class="R0C1" colspan="37"><span style="white-space: nowrap;">Внимание!&nbsp;Оплата&nbsp;данного&nbsp;счета&nbsp;означает&nbsp;согласие&nbsp;с&nbsp;условиями&nbsp;поставки&nbsp;товара.&nbsp;Уведомление&nbsp;об&nbsp;оплате&nbsp;<br />
+			&nbsp;обязательно,&nbsp;в&nbsp;противном&nbsp;случае&nbsp;не&nbsp;гарантируется&nbsp;наличие&nbsp;товара&nbsp;на&nbsp;складе.&nbsp;Товар&nbsp;отпускается&nbsp;по&nbsp;факту<br />
+			&nbsp;прихода&nbsp;денег&nbsp;на&nbsp;р/с&nbsp;Поставщика,&nbsp;самовывозом,&nbsp;при&nbsp;наличии&nbsp;доверенности&nbsp;и&nbsp;паспорта.</span></td>
+		</tr>
+		<tr class="R1">
+			<td class="R1C1" colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R1">
+			<td class="R2C1" colspan="18" rowspan="2">{$Наша компания.Банк}</td>
+			<td class="R2C19" colspan="3"><span style="white-space: nowrap;">БИК</span></td>
+			<td class="R2C22" colspan="16">{$Наша компания.БИК}</td>
+		</tr>
+		<tr class="R3">
+			<td class="R3C19" colspan="3" rowspan="2"><span style="white-space: nowrap;">Сч.&nbsp;№</span></td>
+			<td class="R3C22" colspan="16" rowspan="2">{$Наша компания.Кор. счет}</td>
+		</tr>
+		<tr class="R3">
+			<td class="R4C1" colspan="18"><span style="white-space: nowrap;">Банк&nbsp;получателя</span></td>
+		</tr>
+		<tr class="R1">
+			<td class="R5C1" colspan="2"><span style="white-space: nowrap;">ИНН</span></td>
+			<td class="R5C3" colspan="7">{$Наша компания.ИНН}</td>
+			<td class="R5C1" colspan="2"><span style="white-space: nowrap;">КПП</span></td>
+			<td class="R5C3" colspan="7">{$Наша компания.КПП}</td>
+			<td class="R5C19" colspan="3" rowspan="4"><span style="white-space: nowrap;">Сч.&nbsp;№</span></td>
+			<td class="R5C19" colspan="16" rowspan="4">{$Наша компания.Расчетный счет}</td>
+		</tr>
+		<tr class="R6">
+			<td class="R6C1" colspan="18">{$Наша компания.Юридическое название компании}</td>
+		</tr>
+		<tr>
+			<td colspan="18" style="border-left: #000000 1px solid;border-right: #000000 1px solid;">&nbsp;</td>
+		</tr>
+		<tr class="R3">
+			<td class="R4C1" colspan="18"><span style="white-space: nowrap;">Получатель</span></td>
+		</tr>
+		<tr>
+			<td colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R0">
+			<td class="R10C1" colspan="37"><span style="white-space: nowrap;">Счет&nbsp;на&nbsp;оплату&nbsp;№ </span>{$Номер}<span style="white-space: nowrap;"> от </span>{DataPropis field={$Дата}}</td>
+		</tr>
+		<tr>
+			<td colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R12">
+			<td class="R12C1" colspan="6"><span style="white-space: nowrap;">Поставщик:</span></td>
+			<td class="R12C7" colspan="31">{$Наша компания.Юридическое название компании}, ИНН {$Наша компания.ИНН}, КПП {$Наша компания.КПП}, {$Наша компания.Адрес}, тел.: {$Наша компания.Телефон}</td>
+		</tr>
+		<tr class="R1">
+			<td class="R13C1" colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R12">
+			<td class="R12C1" colspan="6"><span style="white-space: nowrap;">Грузоотправитель:</span></td>
+			<td class="R12C7" colspan="31">{$Наша компания.Юридическое название компании}, ИНН {$Наша компания.ИНН}, КПП {$Наша компания.КПП}, {$Наша компания.Адрес}, тел.: {$Наша компания.Телефон}</td>
+		</tr>
+		<tr>
+			<td colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R1">
+			<td class="R16C1" colspan="6"><span style="white-space: nowrap;">Покупатель:</span></td>
+			<td class="R13C5" colspan="31">{$На кого.Юридическое название}, ИНН {$На кого.ИНН}{if {$На кого.Вид}=="Юр.лицо"}, КПП {$На кого.КПП}{/if}</td>
+		</tr>
+		<tr class="R1">
+			<td class="R13C1" colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R1">
+			<td class="R16C1" colspan="6"><span style="white-space: nowrap;">Грузополучатель:</span></td>
+			<td class="R13C5" colspan="31">{$На кого.Юридическое название}, ИНН {$На кого.ИНН}{if {$На кого.Вид}=="Юр.лицо"}, КПП {$На кого.КПП}{/if}</td>
+		</tr>
+		<tr class="R1">
+			<td class="R13C1" colspan="37">&nbsp;</td>
+		</tr>
+	</tbody>
+</table>
+
+<table cellspacing="0">
+	<tbody>
+		<tr>
+			<td colspan="37">{foreach from="{$Позиции счета}" name="Позиции счета" item=subtable}{if {$Позиции счета.Скидка}!=0}{assign var="status_sk" value="1"}{/if}{/foreach}</td>
+		</tr>
+		<tr class="R1">
+			<td class="R20C1" colspan="2"><span style="white-space: nowrap;">№</span></td>
+			<td class="R20C3" colspan="17"><span style="white-space: nowrap;">Товары&nbsp;(работы,&nbsp;услуги)</span></td>
+			<td class="R20C3" colspan="3"><span style="white-space: nowrap;">Кол-во</span></td>
+			<td class="R20C3" colspan="2"><span style="white-space: nowrap;">Ед.</span></td>
+			<td class="R20C3" colspan="4"><span style="white-space: nowrap;">Цена</span></td>
+			<td class="R20C33" colspan="3"><span style="white-space: nowrap;">Сумма без скидки</span></td>
+			<td class="R20C33" colspan="3"><span style="white-space: nowrap;">Скидки (наценка)</span></td>
+			<td class="R20C33" colspan="3"><span style="white-space: nowrap;">Сумма</span></td>
+		</tr>
+		<tr style="display: none; height: 0px;">
+			<td colspan="37">{foreach from="{$Позиции счета}" name="Позиции счета" item=subtable}</td>
+		</tr>
+		<tr class="R3">
+			<td class="R21C1" colspan="2">{$smarty.foreach.Позиции счета.iteration}</td>
+			<td class="R21C3" colspan="17">{if {$Выбор из прайс-листа} == 'Нет' } {$Позиции счета.Наименование}{/if}{if {$Выбор из прайс-листа} == 'Да' } {$Позиции счета.Наименование из прайс-листа}{/if}</td>
+			<td class="R21C24" colspan="3">{$Позиции счета.Кол-во}</td>
+			<td class="R21C27" colspan="2">{$Позиции счета.Ед. изм}</td>
+			<td class="R21C24" colspan="4">{$Позиции счета.Цена}</td>
+			<td class="R21C33" colspan="3">{SumFormat value="{$Позиции счета.Сумма}" digits=2}</td>
+			<td class="R21C33" colspan="3">{SumFormat value="{$Позиции счета.Сумма скидки}" digits=2}</td>
+			<td class="R21C33" colspan="3">{$Позиции счета.Итого}</td>
+		</tr>
+		<tr style="display: none; height: 0px;">
+			<td colspan="37">{/foreach}</td>
+		</tr>
+		<tr class="R22">
+			<td class="R22C1" colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R1">
+			<td class="R23C29" colspan="28"><span style="white-space: nowrap;">Итого:</span></td>
+			<td class="R23C29" colspan="3">{SumFormat value="{$Сумма}" digits=2}</td>
+			<td class="R23C29" colspan="3">{SumFormat value="{$Сумма скидок}" digits=2}</td>
+			<td class="R23C29" colspan="3">{SumFormat value="{$Сумма} - {$Сумма скидок}" digits=2}</td>
+		</tr>
+		<tr class="R1">
+			<td class="R23C29" colspan="28"><span style="white-space: nowrap;">{if {$Наша компания.НДС включен в стоимость}=="Да"}В том числе НДС:{elseif {$Наша компания.НДС включен в стоимость}=="Нет"}Итого НДС:{else}Без НДС:{/if}</span></td>
+			<td class="R22C29" colspan="3">&nbsp;</td>
+			<td class="R22C29" colspan="3">&nbsp;</td>
+			<td class="R23C29" colspan="3">{if {$Наша компания.НДС включен в стоимость}=="Да"}{SumFormat value="{$Сумма}*{$Наша компания.Ставка НДС}/(100+{$Наша компания.Ставка НДС})" digits=2}{elseif {$Наша компания.НДС включен в стоимость}=="Нет"}{SumFormat value="{$Сумма}*{$Наша компания.Ставка НДС}/100" digits=2}{else}---{/if}</td>
+		</tr>
+		<tr class="R1">
+			<td class="R23C29" colspan="28"><span style="white-space: nowrap;">Всего к оплате:</span></td>
+			<td class="R22C29" colspan="3">&nbsp;</td>
+			<td class="R22C29" colspan="3">&nbsp;</td>
+			<td class="R23C29" colspan="3">{if {$Наша компания.НДС включен в стоимость}!="Нет"}{$Сумма}-{$Сумма скидок}{else}{SumFormat value="({$Сумма} - {$Сумма скидок})+({$Сумма} - {$Сумма скидок})*{$Наша компания.Ставка НДС}/100" digits=2}{/if}</td>
+		</tr>
+		<tr>
+			<td class="R26C1" colspan="37">Всего наименований {$smarty.foreach.Позиции счета.total}, на сумму {if {$Наша компания.НДС включен в стоимость}!="Нет"}{$Сумма}-{$Сумма скидок}{else}{SumFormat value="({$Сумма} - {$Сумма скидок})+({$Сумма} - {$Сумма скидок})*{$Наша компания.Ставка НДС}/100" digits=2}{/if} руб.</td>
+		</tr>
+		<tr class="R1">
+			<td class="R24C1" colspan="37">{SumPropis value="{if {$Наша компания.НДС включен в стоимость}!="Нет"}{$Сумма}{else}{SumFormat value="{$Сумма}+{$Сумма}*{$Наша компания.Ставка НДС}/100" digits=2}{/if}" caps=1}</td>
+		</tr>
+		<tr class="R22">
+			<td colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R22">
+			<td colspan="37">&nbsp;</td>
+		</tr>
+		<tr>
+			<td colspan="37">&nbsp;</td>
+		</tr>
+		<tr class="R1">
+			<td class="R31C1" colspan="4"><span style="white-space: nowrap;">Руководитель</span></td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td class="R31C7" colspan="9">{$Наша компания.Должность руководителя}</td>
+			<td>&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C26">&nbsp;</td>
+			<td class="R31C27">&nbsp;</td>
+			<td class="R31C7" colspan="10">{$Наша компания.Руководитель}</td>
+		</tr>
+		<tr class="R3">
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td class="R32C7" colspan="9"><span style="white-space: nowrap;">должность</span></td>
+			<td>&nbsp;</td>
+			<td class="R32C7" colspan="10"><span style="white-space: nowrap;">подпись</span></td>
+			<td class="R32C7">&nbsp;</td>
+			<td class="R32C7" colspan="10"><span style="white-space: nowrap;">расшифровка подписи</span></td>
+		</tr>
+		<tr class="R1">
+			<td class="R31C1">&nbsp;</td>
+			<td class="R31C1">&nbsp;</td>
+			<td class="R31C1">&nbsp;</td>
+			<td class="R31C1">&nbsp;</td>
+			<td class="R31C1">&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C16">&nbsp;</td>
+			<td class="R33C28">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+		</tr>
+		<tr class="R1">
+			<td class="R31C1" colspan="8"><span style="white-space: nowrap;">Главный (старший) бухгалтер</span></td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td class="R33C8">&nbsp;</td>
+			<td>&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C17">&nbsp;</td>
+			<td class="R31C26">&nbsp;</td>
+			<td class="R31C27">&nbsp;</td>
+			<td class="R31C7" colspan="10">{$Наша компания.Бухгалтер}</td>
+		</tr>
+		<tr class="R3">
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td class="R32C7" colspan="10"><span style="white-space: nowrap;">подпись</span></td>
+			<td class="R32C7">&nbsp;</td>
+			<td class="R32C7" colspan="10"><span style="white-space: nowrap;">расшифровка подписи</span></td>
+		</tr>
+		<tr class="R36">
+			<td colspan="5">&nbsp;</td>
+			<td class="R36C6">&nbsp;</td>
+			<td class="R36C6">&nbsp;</td>
+			<td class="R36C6">&nbsp;</td>
+			<td class="R36C6">&nbsp;</td>
+			<td class="R36C10">&nbsp;</td>
+			<td class="R36C10">&nbsp;</td>
+			<td class="R36C10">&nbsp;</td>
+			<td class="R36C10">&nbsp;</td>
+			<td class="R36C10">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+			<td class="R36C15">&nbsp;</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>&nbsp;</p>
