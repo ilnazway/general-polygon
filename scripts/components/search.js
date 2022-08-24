@@ -1,6 +1,6 @@
 const { createApp, ref, onMounted, computed, watch, toRefs } = Vue;
 
-export const customSearch = {
+export const CustomSearch = {
 
   propts: {
     string: 'test props',
@@ -8,8 +8,6 @@ export const customSearch = {
 
 
   setup(propts) {
-
-  const test5 = 'string component';
 
     const propsDataTest = toRefs(propts);
 
@@ -35,7 +33,7 @@ export const customSearch = {
       let response = await fetch('https://www.anapioficeandfire.com/api/houses');
       let result = await response.json();
 
-      console.log('result: ', result);
+      // console.log('result serach.js: ', result);
 
       cardsData.value = result;
     };
@@ -69,7 +67,6 @@ export const customSearch = {
     };
 
     return {
-      test5,
       searchData,
       cardsData,
       reactiveInput,

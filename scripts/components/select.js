@@ -1,6 +1,6 @@
 const { ref, onMounted } = Vue;
 
-export const customSelect = {
+export const CustomSelect = {
   setup() {
     const selectData = ref({
       type: {
@@ -34,7 +34,7 @@ export const customSelect = {
       console.log('click dropdown');
       let status = selectData.value.stateOpen;
       console.log('status: ', status);
-    
+
       if (!status) {
         openOrClose();
         document.addEventListener('click', outsideEvtListener);
@@ -60,7 +60,7 @@ export const customSelect = {
       }
 
     }
-    
+
 
     function updateCategory(event) {
 
