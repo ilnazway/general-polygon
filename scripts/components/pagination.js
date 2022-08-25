@@ -22,6 +22,11 @@ export const CustomPagination = {
       return total;
     };
 
+    function goPage(event, num) {
+      event.preventDefault();
+      props.dataForDraw.requestCardsFunc(num);
+    }
+
     const newValue = computed(numberPages);
 
     // onMounted(
@@ -29,7 +34,8 @@ export const CustomPagination = {
     // )
 
     return {
-      newValue
+      newValue,
+      goPage
     }
   },
 
@@ -41,7 +47,7 @@ export const CustomPagination = {
 
       <ul>
         <li>
-          <a v-for="n in newValue" @click="dataForDraw.requestCardsFunc(n)" href="#">{{ n }}</a>
+          <a v-for="num in newValue" @click="goPage($event, num)" href="#">{{ num }}</a>
         </li>
       </ul>
       <hr>
