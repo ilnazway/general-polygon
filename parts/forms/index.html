@@ -1,0 +1,30 @@
+<script>
+
+$(document).mousedown((e) => {
+   console.log($(e.target)[0].nodeName);
+});
+
+$(document).mousedown((e) => {
+    if(
+        ((
+            ($(e.target)[0].nodeName == 'SELECT' ||
+            $(e.target)[0].nodeName == 'INPUT' ||
+            $(e.target)[0].nodeName == 'TEXTAREA' ||
+            $(e.target)[0].nodeName == 'BUTTON' ||
+            $(e.target).parents('button').length > 0 ||
+            $(e.target).parents('.chosen-container').length > 0)  &&
+            !$(e.target).hasClass('sess_button')
+        ) || window.location.href.indexOf('report.php') !== -1) &&
+        session_has_expired
+    ) {
+        if($('.session_popup_block').length > 0) return;
+
+        jconfirm(lang.Session_popup_text, function() {
+            window.location.reload();
+        }, null, null, 'session_expire');
+
+    }
+});
+
+
+</script>
