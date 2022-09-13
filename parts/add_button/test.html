@@ -1,0 +1,860 @@
+$que_q = data_select_array(89, 'ALL_ROWS', "status = '0' AND f1140 != '0' AND f9500 = '".$line['ID']."' AND f9570 = 'В наличии' ORDER BY id DESC");
+$array_orig = [];
+foreach ($que_q AS $value) {
+    $new_array_q = $new_array_q.$value['f7821'].'\r\n';
+
+    array_push($array_orig, [$value['id'], $value['f9800'], $value['f9810'], $value['f1140'], $value['f7821'], $value['f1137']]);
+}
+
+
+// Вырежем последний перенос строки
+$row_q = mb_substr($new_array_q, 0, -4);
+
+// Обновим список доступных сериников для расхода
+$que_q2 = "UPDATE f_fields SET type_value = '".$row_q."' WHERE id = '9550'";
+$row_q2 = sql_fetch_assoc(sql_query($que_q2));
+
+// Начало
+global $disp_lines;
+foreach ($disp_lines as $line_id) {
+    $line = data_select_array($table_id, 'id = ', $line_id);
+    $key = count($disp_lines) > 1 ? $line_id : 0;
+}
+
+if (isset($_REQUEST['csrf'])) {
+    $error_trace = [];
+    $key = count($_REQUEST['parameters']) > 1 ? $line['ID'] : 0;
+
+    $toCompany = (int)$_REQUEST['parameters'][0]['Кому выдано'];
+    $myComent = form_input($_REQUEST['parameters'][0]['Комментарий']);
+    $countNew = (int)$_REQUEST['parameters']['Кол-во'];
+
+    $kvnn = is_array($_REQUEST['parameters'][0]['Серийные номера']) ? implode(", ", $_REQUEST['parameters'][0]['Серийные номера']) : trim($_REQUEST['parameters'][0]['Серийные номера']);
+    $myArray = explode(", ", $kvnn);
+
+    $nowTime = date('Y-m-d H:i:s', strtotime('-1 hour'));
+
+    /** /
+    echo '<br> Время: '.date('Y-m-d H:i:s').'<br/>';
+
+    echo '<pre>';
+    echo print_r($myArray);
+    echo '</pre>';
+
+    echo '<br/>Кому: '.$toCompany;
+    echo '<br/>Коммент: '.$myComent;
+    echo '<br/>Кол-во: '.$countNew;
+
+    echo '<br/><br/><pre>';
+    echo print_r($array_orig);
+    echo '</pre>';
+    exit;
+    /**/
+
+    $allCount = $countNew * count($myArray);
+
+    if ($allCount <= $line['Остаток']) {
+        $line['Остаток'] = $line['Остаток'] - $allCount;
+    }
+    else {
+        $line['Остаток'] = 0;
+    }
+
+    // Создаем запись в т.Расход
+    data_insert(88, EVENTS_ENABLE, array('user_id'=>$user['id'],
+    'add_time'=>$nowTime,
+    'status'=>'0',
+    'f1128'=>$nowTime,
+    'f9110'=>$line['ID'],
+    'f1131'=>$user['id'],
+    'f1129'=>$toCompany,
+    'f6931'=>$allCount,
+    'f9100'=>$myComent));
+
+    // Определим id новой записи в т.Расход
+    $que_zz = "SELECT id FROM f_data88 WHERE f9100 = '".$myComent."' AND f6931 = '".$allCount."' AND f9110 = '".$line['ID']."' ORDER BY id DESC LIMIT 1";
+    $id_zz = sql_fetch_assoc(sql_query($que_zz))['id'];
+
+    // Создаем запись в т. История перемещений
+    data_insert(680, EVENTS_ENABLE, array('user_id'=>$user['id'],
+    'add_time'=>$nowTime,
+    'status'=>'0',
+    'f9220'=>$line['ID'],
+    'f9240'=>$nowTime,
+    'f9250'=>'Расход со склада',
+    'f9260'=>$user['id'],
+    'f9270'=>$myComent));
+
+    foreach ($myArray AS $value) {
+        $y = 0;
+        for ($i = 0; $y != 1; $i++) {
+            if ($array_orig[$i][4] == $value) {
+                $id_tempp = $array_orig[$i][0];
+                $name_tempp = $array_orig[$i][5];
+                $count_tempp = $array_orig[$i][3];
+                $href1_tempp = $array_orig[$i][1];
+                $href2_tempp = $array_orig[$i][2];
+                $y = 1;
+            }
+        }
+
+        $que_tempp = "SELECT f1138, f7811, f7821, f1136, f9500 FROM f_data89 WHERE id = '".$id_tempp."' ORDER BY id DESC LIMIT 1";
+        //$id_tempp = sql_fetch_assoc(sql_query($que_tempp))['id'];
+        //$name_tempp = sql_fetch_assoc(sql_query($que_tempp))['f1137'];
+        $izmer_tempp = sql_fetch_assoc(sql_query($que_tempp))['f1138'];
+        //$count_tempp = sql_fetch_assoc(sql_query($que_tempp))['f1140'];
+        $tip_tempp = sql_fetch_assoc(sql_query($que_tempp))['f7811'];
+        $numm_tempp = sql_fetch_assoc(sql_query($que_tempp))['f7821'];
+        $prih_tempp = sql_fetch_assoc(sql_query($que_tempp))['f1136'];
+        $sclad_tempp = sql_fetch_assoc(sql_query($que_tempp))['f9500'];
+        //$href1_tempp = sql_fetch_assoc(sql_query($que_tempp))['f9800'];
+        //$href2_tempp = sql_fetch_assoc(sql_query($que_tempp))['f9810'];
+
+        $nowTime = date('Y-m-d H:i:s', strtotime('-1 hour'));
+
+        $temp_count_p = $count_tempp - $countNew;
+
+        if ($temp_count_p > 0) {
+            $tempIdR = data_insert(89, EVENTS_ENABLE, array('user_id'=>$user['id'],
+            'add_time'=>$nowTime,
+            'status'=>'0',
+            'f1137'=>$name_tempp,
+            'f1138'=>$izmer_tempp,
+            'f1140'=>$countNew,
+            'f7811'=>$tip_tempp,
+            'f7821'=>$numm_tempp,
+            'f1136'=>$prih_tempp,
+            'f9500'=>$sclad_tempp,
+            'f9690'=>$id_zz,
+            'f9570'=>'В расходе',
+            'f9800'=>$href1_tempp,
+            'f9810'=>$href2_tempp));
+
+            //10060 - id, 10070 - date, 10080 - status, 10090 - user, 10100 - comment..
+            data_insert(750, EVENTS_ENABLE, array('user_id'=>$user['id'],
+            'add_time'=>$nowTime,
+            'status'=>'0',
+            'f10060'=>$tempIdR,
+            'f10070'=>$nowTime,
+            'f10080'=>'Расход со склада',
+            'f10090'=>$user['id'],
+            'f10100'=>$myComent,
+            'f10110'=>$numm_tempp,
+            'f10140'=>$toCompany));
+
+            data_update(89, EVENTS_ENABLE, array('f1140'=>$temp_count_p), "id = '".$id_tempp."'");
+        }
+        else if ($temp_count_p <= 0) {
+            data_update(89, EVENTS_ENABLE, array('f9690'=>$id_zz, 'f9570'=>'В расходе'), "id = '".$id_tempp."'");
+
+            //10060 - id, 10070 - date, 10080 - status, 10090 - user, 10100 - comment..
+            data_insert(750, EVENTS_ENABLE, array('user_id'=>$user['id'],
+            'add_time'=>$nowTime,
+            'status'=>'0',
+            'f10060'=>$id_tempp,
+            'f10070'=>$nowTime,
+            'f10080'=>'Расход со склада',
+            'f10090'=>$user['id'],
+            'f10100'=>$myComent,
+            'f10110'=>$numm_tempp,
+            'f10140'=>$toCompany));
+        }
+    }
+
+    $line['Последнее действие'] = 'Отправлен в расход';
+
+    if (count($error_trace) == 0) {
+        display_notification($lang['conf']['Действие успешно выполнено!']?:'Действие успешно выполнено!', 1);
+    }
+    if (count($error_trace) > 0) {
+        display_notification($lang['conf']['Действие не выполнено.']?:'Действие не выполнено.', 2);
+    }
+    if (++$GLOBALS['line_counter'] >= count($_REQUEST['sel'])) {
+        echo "<script>if (window.opener.location.href.indexOf(`report.php`) === -1) window.opener.location.reload(); else if (window.opener.kanban_num) {let num = window.opener.kanban_num; window.opener[`updateDataKanban` + num](); delete window.opener.kanban_num;} else window.opener.updateReport(); window.close();</script>";
+    }
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title><?=$lang['conf']['Выдача оборудования']?:'Выдача оборудования'?></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="themes/clientbase/css/aa-popup-template.css">
+    <link rel="stylesheet" href="cache/cur_scheme_<?=$config['css_id']?>_<?=$config['css_id_sheme']?>.css">
+    <link rel="stylesheet" href="themes/clientbase/libs/jquery/jquery-ui.min.css">
+    <link rel="stylesheet" href="themes/clientbase/css/style.css?">
+    <script src="themes/clientbase/libs/jquery/jquery-3.2.1.min.js"></script>
+    <script src="themes/clientbase/libs/jquery/jquery-ui.min.js"></script>
+    <script src="themes/clientbase/libs/jquery/widget.js"></script>
+    <link rel="stylesheet" type="text/css" href="themes/clientbase/libs/jquery/autocomplete/jquery.autocomplete.css?"/>
+<link rel="stylesheet" type="text/css" href="themes/clientbase/libs/jquery/autocomplete/lib/thickbox.css?"/>
+<link rel="stylesheet" href="themes/clientbase/libs/spectrum-colorpicker/spectrum.css">
+<link rel="stylesheet" href="themes/clientbase/libs/chosen/chosen.css?">
+
+
+<link rel="stylesheet" href="themes/clientbase/libs/jquery/jquery-ui.min.css?">
+<link rel="stylesheet" href="themes/clientbase/libs/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css?">
+
+<link href="themes/clientbase/libs/filestyle/filestyle.min.css?">
+<link rel="stylesheet" href="themes/clientbase/libs/fancybox/jquery.fancybox.min.css?">
+<script src="themes/clientbase/libs/jquery/jquery-ui.min.js?"></script>
+<script src="themes/clientbase/libs/jquery/jquery.mask.js?"></script>
+<script src="themes/clientbase/libs/jquery/widget.js?"></script>
+<script>
+    /*** Handle jQuery plugin naming conflict between jQuery UI and Bootstrap ***/
+    $.widget.bridge('uibutton', $.ui.button);
+    $.widget.bridge('uitooltip', $.ui.tooltip);
+</script>
+<script src="mobile/ui/lib/bootstrap.min.js?"></script>
+<script src="themes/clientbase/libs/jquery/jquery-migrate.min.js?"></script>
+<script src="themes/clientbase/libs/jquery/jquery.cookie.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/jquery/jquery.mousewheel.js?"></script>
+    <script type="text/javascript"
+            src="themes/clientbase/libs/jquery/i18n/datepicker-ru.js?"></script>
+<script src="themes/clientbase/libs/autosize//autosize.min.js?"></script>
+<script src="themes/clientbase/libs/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js?"></script>
+<script src="themes/clientbase/libs/spectrum-colorpicker/spectrum.js"></script>
+<script src="themes/clientbase/libs/spectrum-colorpicker/jquery.spectrum-ru.js"></script>
+<script src="themes/clientbase/libs/moment/moment-with-locales.js"></script>
+
+<script type="text/javascript" src="themes/clientbase/libs/jquery/autocomplete/jquery.autocomplete.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/ckeditor/ckeditor.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/ckeditor/adapters/jquery.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/jquery/i18n/jquery-ui-timepicker-addon.min.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/jquery/i18n/jquery-ui-timepicker-ru.js?"></script>
+<script src="themes/clientbase/libs/fancybox/jquery.fancybox.min.js?"></script>
+<script src="themes/clientbase/libs/flexmenu.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/jquery/jquery-href_post.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/jquery/jquery.select_fast_edit.js?"></script>
+<script type="text/javascript" src="include/js/help_sys.js?"></script>
+<script type="text/javascript" src="include/js/xplayer.js?"></script>
+<script type="text/javascript" src="mybic.js?"></script>
+<script type="text/javascript" src="explode.js?"></script>
+<script type="text/javascript" src="base64.js?"></script>
+<script type="text/javascript" src="rgbcolor.js?"></script>
+<script type="text/javascript" src="lang/russian.js?"></script>
+<script type="text/javascript" src="lang/russian_f.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/dialog.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/filestyle/filestyle.min.js?"></script>
+<script type="text/javascript" src="include/js/wrap_select.js?"></script>
+<script type="text/javascript" src="checkByMask.js?c1"></script>
+<script src="themes/clientbase/js/stick.js?"></script>
+<script src="themes/clientbase/js/autocomplete-settings.js?"></script>
+<script src="themes/clientbase/js/overlay.js?"></script>
+<script src="themes/clientbase/js/view-line-calcs.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/moment.min.js?"></script>
+<script type="text/javascript" src="themes/clientbase/libs/mithril.min.js?"></script>
+<script src="themes/clientbase/libs/chosen/chosen.jquery.js?"></script>
+    <script src="include/js/controls.js?"></script>
+<script src="modules/livechat/livechat.js"></script>
+
+<script>
+    var user_group_id       = '';
+    var config_site_url     = 'https://crm140734.clientbase.ru';
+    var script_name         = '';
+    var incorrect_crypt_key = '';
+    var bizproc_done        = '';
+    var config_alt_css      = '';
+    var csrf                = '';
+    var prev_cat            = '';
+    var cur_cat             =  prev_cat;
+    var asterisk_login      = '';
+    var autocomplete        = $('.autocomplete');
+    var online_consult      = 1;
+    var configType          = 'SAAS';
+    var userEmail           = '',
+        userPhone           = '';
+    var showFiltersList     = 0;
+    var curSubtableId       = -1;
+    var show_fields         = null;
+    var clientbase_domain   = 'clientbase.ru';
+
+        var vkNameLinkUser = '';
+
+    var tableId = '';
+    var lineId = '';
+    var cur_subtable = undefined;
+    var cur_subtable_id;
+            var relTable = 'undefined';
+        var relLine = 'undefined';
+        var relField = 'undefined';
+        var allFiltersOn = 'undefined';    var filterId = 'undefined';    var isArchive = 'undefined';    var isDeleted = 'undefined';    var allRecords = 'undefined';    var curPage = 'undefined';
+    var colorpickerSetings = {
+        showPalette: true,
+        containerClassName: 'colorpicker-container',
+        showInput: true,
+        preferredFormat: 'hex',
+        cancelText: '',
+        palette: [
+            ["#000","#444","#666","#999","#ccc","#eee","#f3f3f3","#fff"],
+            ["#f00","#f90","#ff0","#0f0","#0ff","#00f","#90f","#f0f"],
+            ["#f4cccc","#fce5cd","#fff2cc","#d9ead3","#d0e0e3","#cfe2f3","#d9d2e9","#ead1dc"],
+            ["#ea9999","#f9cb9c","#ffe599","#b6d7a8","#a2c4c9","#9fc5e8","#b4a7d6","#d5a6bd"],
+            ["#e06666","#f6b26b","#ffd966","#93c47d","#76a5af","#6fa8dc","#8e7cc3","#c27ba0"],
+            ["#c00","#e69138","#f1c232","#6aa84f","#45818e","#3d85c6","#674ea7","#a64d79"],
+            ["#900","#b45f06","#bf9000","#38761d","#134f5c","#0b5394","#351c75","#741b47"],
+            ["#600","#783f04","#7f6000","#274e13","#0c343d","#073763","#20124d","#4c1130"]
+        ],
+    };
+    $(function () {
+        if ($('textarea.html_editor').length > 0) {
+            setTimeout(function() {
+                $('textarea.html_editor').ckeditor(function () { }
+                    , { width: '600px', height: '300px' });
+            }, 1000);
+        }
+    })
+</script>
+<script src="themes/clientbase/js/js_top.js?"></script>
+
+<script type="text/javascript">
+    var help_available = 1;
+    //Функция инициализации плагина JQuery:Chosen, add_func - функция которая вызывается до инициализации.
+    function init_chosen(is_destroy = false, add_func = null, el = null) {
+        add_func != null ? add_func() : '';
+
+        if(el != null){
+            el.chosen();
+            return;
+        }
+        $('select').each(function(i) {
+            const $select = $(this);
+            const selectId = $select.attr('id') ? $select.attr('id') : '';
+
+            if(is_destroy){
+                $select.chosen("destroy");
+            }
+
+            setTimeout(() => {
+                if(!$select.hasClass('combobox') && // поля типа Связь
+                    !$select.hasClass('dont_use_chosen') && // явный запрет использовать chosen
+                    !$select.hasClass('fields__fast-edit--combobox') &&
+                    !$select.hasClass('combobox--hidden') &&
+                    !$select.hasClass('select_tpl') &&  // выбор шаблона вычисления
+                    !$select.hasClass('conditions_select') && // условия для запуска в шаблонах
+                    !$select.hasClass('cons_cond') && // условие в вычислении
+                    !$select.hasClass('cons_union') && // select "и/или" для условий в вычислении
+                    selectId.indexOf('cond_union') < 0 && // select "и/или" для условий в информерах
+                    selectId.indexOf('cond_term') < 0) {
+                    let sel = $select;
+                    let selected = sel.val(); // cache selected value, before reordering
+                    let opts_group_list = sel.children('optgroup');
+                    let opts_list = sel.children('option');
+
+                    opts_group_list.each(function(i, elem) {
+                        opts_list_in_group = $(elem).children('option');
+                        opts_list_in_group.sort(function(a, b) { return $(a).text() > $(b).text() ? 1 : -1; });
+                        $(elem).html('').append(opts_list_in_group);
+                    });
+                    opts_group_list.sort(function(a, b) { return $(a).text() > $(b).text() ? 1 : -1; });
+                    opts_list.sort(function(a, b) { return $(a).text() > $(b).text() ? 1 : -1; });
+                    sel.html('').append(opts_list).append(opts_group_list);
+                    sel.val(selected);
+
+                    const defaultWidth = $select.hasClass('strict-mode-select') || $select.hasClass('sync-mode-select') ? '100%' : $select.outerWidth() - 2;
+                    const chosenParams = { width : defaultWidth, search_contains : true }; // Для инициализации временно скрытых select-ов
+                    $select.chosen(chosenParams);
+                    //if ($select.siblings('.chosen-container').length > 1) $select.siblings('.chosen-container:eq(1)').remove();
+
+                    setTimeout(function() {
+                        $($select).trigger("chosen:updated");
+                    }, 1);
+
+                    const chosenLink = $select.siblings('.chosen-container').find('a.chosen-single');
+                    //chosenLink.off('click', setChosenSelectOptionsDisplay());
+                    //chosenLink.on('click', setChosenSelectOptionsDisplay($select));
+                }
+            }, 0);
+        });
+    }
+
+    function destroy_chosen() {
+        $('select').each(function(i) {
+            const $select = $(this);
+            $select.chosen("destroy");
+        });
+    }
+
+
+    function setChosenSelectOptionsDisplay(select) {
+        $(select).siblings('.chosen-container').find('a.chosen-single').on('click', function() {
+            const link = $(this);
+            const container = $(select).siblings('.chosen-container');
+            let chosenTop = container.offset().top - 3;
+            let chosenLeft = container.offset().left;
+            let posTop = $(select).outerHeight() + chosenTop;
+            let selectWidth = $(select).width();
+            let offset = { top: posTop, left : chosenLeft };
+
+            if ($(select).parents('.subtable__cell').length > 0) { // Подтаблица
+                chosenTop = container.offset().top - 1;
+                selectWidth = $(select).outerWidth();
+            } else {
+                if ($(select).parents('.fields__cell').length > 0) { // Таблица
+                    chosenTop = container.offset().top - 8;
+                    selectWidth = $(select).width() - 6;
+                } else { // Прочие поля
+                    chosenTop = container.offset().top - 1;
+                    selectWidth = $(select).outerWidth() - 1;
+                }
+            }
+
+            offset = { top: posTop, left : chosenLeft };
+            link.siblings('div.chosen-drop').offset(offset).width(selectWidth);
+        });
+    }
+
+    $(document).ready(function() {
+                          // Убираем глобальную инициализацию chosen, т.к. этот функционал необходимо оставить
+        // только в настройках (полей, форматирование, ДД и т.д.)
+        //init_chosen();
+    });
+    var lang_full = 'russian';
+    var csrf = '';
+    var page_hash = "";
+        var config = new Object;
+    config['type'] = 'SAAS';
+    config['version'] = '030003';
+    config['lang'] = 'russian';
+    config['revision'] = '22427';
+    config['events_refresh'] = ('' ? '' : 30000);
+    config['display_calendar_events'] = '0';
+
+    var last_ie_width = 0;
+    var last_ie_height = 0;
+    function on_window_resize() {
+                return;
+
+        left_white = document.getElementById('left_white');
+        right_white = document.getElementById('right_white');
+        top_header_div = document.getElementById('top_header_div');
+        fields_content_table = document.getElementById('fields_content_table');
+        fields_buttons_table = document.getElementById('fields_buttons_table');
+        popup_div_headers = document.getElementById('popup_div_headers')
+        popup_table_headers = document.getElementById('popup_table_headers')
+        window_width = document.documentElement.clientWidth;
+        window_height = document.documentElement.clientHeight;
+        //buttons_h = fields_buttons_table.offsetHeight;
+
+        if (page_loaded) {
+            visible_popup = 0;
+        }
+        else if (document.getElementById('top_header_back')) {  //если есть фоновый div блок
+            top_header_div.style.position = 'absolute';
+            document.getElementById('top_header_back').style.height = top_header_div.offsetHeight + "px";
+        }
+    }
+
+    var clear_header_cat_timer = 0;
+    function ClearHeaderCat() {
+            }
+
+    function display_filter_group(filter_id, filter_pid) {
+        if ($('#filters_div' + filter_id).css('display') != 'flex') {
+            $('.child_active_filters_group' + filter_pid).css('color', '#bbbbbb');
+            $('#active_filters_group' + filter_id).css('color', 'black');
+            $('.child_filters' + filter_pid).css('display', 'none');
+            $('#filters_div' + filter_id).css('display', 'flex');
+
+        }
+        else {
+            $('#active_filters_group' + filter_id).css('color', '#bbbbbb');
+            $('.child_filters' + filter_pid).css('display', 'none');
+            $('#filters_div' + filter_id).css({
+                'display': 'none'
+            });
+        }
+    }
+
+        $(document).ready(function () {
+
+        $('#fixed-button').on('click', function() {
+            if ( $(".fields__header-btn--add-agent").length !== 0 || $(".action-btns__item--add-agent").length !== 0 ) {
+                window.open("view_line2.php?table=&line=new");
+            }
+        });
+
+
+        //Устанавливаем ширины для столбцов
+        //columnWidths();
+
+        my_cookie = $.cookie('bizproc_id');
+        if (my_cookie) {
+            $.cookie('bizproc_id', null);
+            open_dialog_my(my_cookie);
+        }
+        setTimeout(function () {
+            $(".display_notification:not(.display_notification_class_by_type_3)").slideUp(400, on_window_resize);
+        }, 5000);
+        xPlayer.init('cb_player', '')
+    });
+
+    function hide_this_notif(obj) {
+        $(obj).parent().slideUp(400, on_window_resize);
+        return false;
+    }
+
+
+
+</script>
+
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">
+        (function (d, w, c) {
+            (w[c] = w[c] || []).push(function() {
+                try {
+                    w.yaCounter45153261 = new Ya.Metrika({
+                        id:45153261,
+                        clickmap:true,
+                        trackLinks:true,
+                        accurateTrackBounce:true,
+                        webvisor:true
+                    });
+                } catch(e) { }
+            });
+
+            var n = d.getElementsByTagName("script")[0],
+                s = d.createElement("script"),
+                f = function () { n.parentNode.insertBefore(s, n); };
+            s.type = "text/javascript";
+            s.async = true;
+            s.src = "https://mc.yandex.ru/metrika/watch.js";
+
+            if (w.opera == "[object Opera]") {
+                d.addEventListener("DOMContentLoaded", f, false);
+            } else { f(); }
+        })(document, window, "yandex_metrika_callbacks");
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/45153261" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+
+
+<script defer src="themes/clientbase/js/index-top.js?"></script>
+<script type="text/javascript">
+    function getFilterCounts() {
+        /// Подсчет количества записей по фильтрам
+        jQuery(function ($) {
+            var ids = [];
+            $("a.header__filter-link.with-counter").each(function (index, a) {
+                ids.push($(a).data("filter-id"));
+            });
+            $.post({
+                url: "filter_get_count.php",
+                data: {
+                    csrf: csrf,
+                    ids: ids
+                },
+                success: function (data) {
+                    $("a.header__filter-link.with-counter").each(function (index, a) {
+                        let link = $(a);
+                        let count = data[link.data("filter-id")];
+                        let span = link.find("span.filter-counter");
+                        if (count !== undefined) {
+                            span.text(count);
+                        } else {
+                            span.text(0);
+                        }
+                    });
+                    // Вызываем функцию ресайза окна, которая перерисовывает flexmenu "Еще" после вставки значений в фильтры
+                    resizeTrigger();
+                }
+            });
+        });
+    }
+
+    function resizeTrigger() {
+        setTimeout(function() {
+            $(window).trigger('resize');
+        }, 100);
+    };
+</script>
+<script type="text/javascript" src="include/js/tabs.js?"></script><!-- Активность на вкладках и в приложении -->
+<script type="text/javascript" src="include/js/event_windows.js?"></script>
+<!-- Плавающие окна - видимость, ресайз, перемещение -->
+<script>
+    var max_notifications = +('3');
+</script>
+
+<script type="text/javascript" src="include/js/notify.js?"></script>        <!-- Уведомления -->
+<script type="text/javascript" src="include/js/tips.js?"></script>          <!-- Функции напоминаний -->
+<script type="text/javascript" src="include/js/storage.js?"></script>       <!-- Объект данных -->
+<script defer type="text/javascript" src="include/js/events.js?"></script>        <!-- Подписка на события -->
+<!-- Глобальный поиск -->
+<script type="text/javascript" src="include/js/global_search.js?"></script>
+<!-- End глобальный поиск -->
+    <script defer>
+    $(document).ready(function(){
+        NProgress.set(0.99);
+        setTimeout(function() { NProgress.done(); $('.fade').removeClass('out'); }, 100);
+    });
+    </script>
+    <script src="include/push_notification/firebase-app.js"></script>
+    <script src="include/push_notification/firebase-messaging.js"></script>
+    <script src="include/push_notification/firebase-analytics.js"></script>
+    <script src="include/push_notification/getToken.js"></script>
+<script src="themes/clientbase/js/color-format.js?"></script>
+<script src="themes/clientbase/libs/fixedTable/fixedTable.js?"></script>
+<style>
+    .ui-dialog-titlebar-close {
+        z-index: 2000 !important;
+    }
+</style>
+
+        <script type="text/javascript"
+            src="themes/clientbase/libs/jquery/i18n/datepicker-ru.js?"></script>
+        <script src="themes/clientbase/js/preloader.js"></script>
+    <script type="text/javascript" src="lang/<?=$config['lang']?>.js?"></script>
+<style>
+.btn {
+    padding: 5px 10px 5px 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #e2e2e2;
+    border-radius: 5px;
+}
+.btn:hover {
+    cursor: pointer;
+    background-color: #ecf4e6;
+    border-radius: 7px;
+}
+.addItem {
+    height: 28px;
+    width: 8px;
+    margin-left: 1px;
+    text-align: center;
+    padding: 0px 8px 0px 8px;
+    background-color: #ecf4e6;
+    border: 1px solid #e2e2e2;
+    border-radius: 5px;
+}
+.addItem:hover {
+    cursor: pointer;
+    background-color: #d8e5ce;
+    border-radius: 7px;
+}
+.delItem {
+    height: 14px;
+    width: 5px;
+    margin-right: 0px;
+    padding: 0 5px 5px 5px;
+    background-color: #edd6d5;
+    border: 1px solid #e2e2e2;
+    border-radius: 5px;
+}
+.delItem:hover {
+    cursor: pointer;
+    background-color: #e2c6c5;
+    border-radius: 7px;
+}
+</style>
+
+<script type="text/javascript">
+var z = 0;
+var x = 0;
+
+function changeName(serialNum) {
+
+}
+</script>
+
+<?php
+$parameters['Серийные номера'] = [];
+$result_list = sql_select_field(FIELDS_TABLE, 'type_value', 'id = ' . get_field_id(9550));
+if ($row_list = sql_fetch_assoc($result_list)) {
+    $parameters['Серийные номера'] = explode("\n", $row_list['type_value']);
+    $parameters['Серийные номера'] = array_map('trim', $parameters['Серийные номера']);
+    $temp = [];
+    foreach ($parameters['Серийные номера'] as $v) $temp[$v] = $lang['conf'][$v]?:$v;
+    $parameters['Серийные номера'] = $temp;
+    unset($temp);
+}
+?>
+</head>
+<body>
+    <form method="post" class="aa-popup" enctype="multipart/form-data" style="width: 100%; margin-left: auto; margin-right: auto;">
+            <div class="some-block" style="margin-top: 10px;">
+                <h3 class="aa-popup__title"><?=$lang['conf']['Выдача оборудования']?:'Выдача оборудования'?></h3>
+            </div>
+                <!-- Вставленный код -->
+
+    <div class="bd1" id="bd_1">
+        <table border="0" cellpadding="10" cellspacing="5" style="margin-left: auto; margin-right: auto;">
+            <tbody>
+                <tr>
+                    <td style="text-align: left;">
+                        <span style="margin-right: 9px;"><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Наименование:</strong></span>
+                        <span><?=form_display($line['Наименование (текст)'])?></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">
+                        <div class="user-data__user-fields user-data__user-fields--view" id="edit-multi13700" style="display: inline-block;">
+                            <span style="margin-right: 9px;"><strong>&nbsp;&nbsp;&nbsp;&nbsp;Серийные номера:</strong></span>
+
+                            <div style="display: inline-block; width: 500px;">
+                                <input type="hidden" id="view_value13700" class="hidden-input hidden-input--multi" value="" line_id="4">
+                                <div style="border-top: 1px solid gray;"></div>
+                                <?php foreach ($parameters['Серийные номера'] as $k => $v): ?>
+                                    <div class="user-data__user-fields-row">
+                                        <input type="checkbox" class="user-data__multi-checkbox user-data__multi-checkbox--data"
+                                        id="parameters[Серийные номера][<?=$v?>]" index="<?=$k?>" style="margin-right: 5px;"
+                                        value="<?=$k?>" name="parameters[<?=$key?>][Серийные номера][]"
+                                        <?php if ($k === form_display($line['Серийные номера (ДД)'])): ?>checked="checked"<?php endif; ?>>
+                                        <label for="parameters[<?=$key?>][Серийные номера][<?=$v?>]" class="user-data__multi-label user-data__multi-label--data" style="padding-top: 3px;">
+                                        <?php foreach ($array_orig AS $value) {if ($value[4] == $v) {echo $value[1].' - '.$value[2].' - '.$v.' - '.$value[3].' шт.';}} ?></label>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">
+                        <span style="margin-right: 9px;"><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Количество:</strong></span>
+                        <input name="parameters[Кол-во]" type="number" value="1" style="width:60px; display: inline-block;">
+                        <span style="color: #a2a2a2; font-size: 12px;">* для каждой выбранной позиции</span>
+                    <td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">
+                        <span style="margin-right: 8px;"><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Кому выдано:</strong></span>
+                        <div class="aa-popup__val" style="display: inline-block; width: 500px;">
+                            <select name="parameters[<?=$key?>][Кому выдано]"
+                            id="link_<?=get_field_id(9310) . '_' . $line['ID']?>"
+                            class="combobox aa-popup__required-param dont_use_chosen"
+                            def_value=""
+                            field_id="<?=get_field_id(9310)?>"
+                            line_id="<?=$line['ID']?>"
+                            table_id="<?=get_table_id(85)?>">
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">
+                            <span style="margin-right: 8px; display: inline-block;"><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Комментарий:</strong></span>
+                            <div class="aa-popup__val" style="display: inline-block;">
+                                <textarea style="width: 500px; max-width: 500px; min-width: 500px;
+                                height: 60px; max-height: 120px; min-height: 30px;" name="parameters[<?=$key?>][Комментарий]"></textarea>
+                            </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <input type="hidden" name="csrf" value="<?=$csrf?>">
+
+    <div style="margin-left: auto; margin-right: auto; position: fixed; bottom: 15px; left: 42%;">
+        <input type="submit" class="btn" style="border-radius: 5px; width: 100px;" value="Выдать"
+        id="aa-sumbit-btn" onclick="return confirm(
+        '<?=$lang['conf']['Вы уверены, что хотите отправить указанные товары в расход?']?:
+        'Вы уверены, что хотите отправить указанные товары в расход?'?>');">
+    </div>
+                    <!-- Вставленный код -->
+</form>
+
+<script>
+    var link_index = 0;
+    var params = {
+        showOn: "button",
+        dateFormat: lang.date_js_format,
+        showAlways: true,
+        buttonImage: "images/calbtn.png",
+        buttonImageOnly: true,
+        showAnim: (('\v' == 'v') ? "" : "show"),  // в ie не включаем анимацию, тормозит
+    };
+
+    $('.not_time').datepicker(params);
+    $('.not_time').attr("autocomplete", "off");
+    $('body').delegate('.not_time', 'click', function () {
+        if(!$(this).hasClass('hasDatepicker')){
+            $(this).next('.ui-datepicker-trigger').trigger('click');
+        }
+    });
+
+    $('.time').datetimepicker(params);
+    $('.time').attr("autocomplete", "off");
+    $('body').delegate('.time', 'click', function () {
+        if(!$(this).hasClass('hasDatepicker')){
+            $(this).next('.ui-datepicker-trigger').trigger('click');
+        }
+    });
+
+    $(document).ready(function () {
+        $('select.combobox').each(function( index, box ) {
+            const $combobox = $(box);
+            const fieldId = $combobox.attr('field_id');
+            const lineId = $combobox.attr('line_id');
+            const tableId = $combobox.attr('table_id');
+            create_combobox($combobox);
+            let timeout;
+            let input = getAcFromCombobox($combobox);
+            let btn = input.next();
+            let url = 'select_value.php?field=' + fieldId + '&line=' + lineId;
+            let getAcData = function() {
+                autocomplete_ajax_request($combobox, url, false, true, undefined);
+                btn.off('click', getAcData);
+                input.off('click', getAcData);
+            };
+            input.on('click', getAcData);
+            btn.on('click', getAcData);
+
+            input.on('keyup', function(e) {
+                let word = '&q=';
+                if (input.val() !== '') {
+                    word += encodeURIComponent(input.val());
+                }
+                let url_by_word = 'select_value.php?field=' + fieldId + '&line=' + lineId + word;
+                if (e.keyCode === 17 || e.keyCode === 18 || e.keyCode === 16 || e.keyCode === 27 || e.keyCode === 40 || e.keyCode === 37 ||
+                    e.keyCode === 38 || e.keyCode === 39 || e.keyCode === 9 || e.keyCode === 20 || e.keyCode === 13) {
+                    return;
+                }
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    autocomplete_ajax_request($combobox, url_by_word, false, true, undefined);
+                }, 100);
+            });
+
+            autocomplete_ajax_request($combobox, url, false, false, 0, '', {}, false);
+            $combobox.val($combobox.attr('def_value'));
+            setValueToAc($combobox);
+        });
+
+        init_chosen();
+    });
+
+    // Проверка обязательности заполнения параметра (если параметр обязателен для заполнения)
+    $('#aa-sumbit-btn').on('click', function() {
+        const requiredParamError = $('#required-param-error');
+        let hasEmptyFields = false;
+
+        $('.aa-popup__required-param').each(function(idx, param) {
+            const paramField = $(param);
+            const paramVal = paramField.val();
+            const isLinkField = paramField.hasClass('combobox'); // Поле типа Связь
+
+            if (!paramVal || paramVal == 'null' || paramVal.length < 1) {
+                if (isLinkField) paramField.siblings('.autocomplete').children().css({ background: '#ffe0e0' });
+                else paramField.css({ background: '#ffe0e0' });
+
+                paramField.parents('.aa-popup__row').find('.aa-popup__key').css({ color: 'red' });
+                hasEmptyFields = true;
+            } else {
+                if (isLinkField) paramField.siblings('.autocomplete').children().css({ background: '' });
+                else paramField.css({ background: '' });
+                paramField.parents('.aa-popup__row').find('.aa-popup__key').css({ color: '' });
+            }
+        });
+
+        if (hasEmptyFields) {
+            requiredParamError.parent().removeClass('hidden');
+            requiredParamError.text(lang['not_all_fields']);
+            return false;
+        } else {
+            requiredParamError.parent().addClass('hidden');
+            requiredParamError.text('');
+        }
+    });
+</script>
+</body>
+</html>

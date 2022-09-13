@@ -1,0 +1,642 @@
+<style>
+.k_field_name{
+ font-size: 14px;
+ font-family: Arial,Arial,Helvetica,sans-serif;
+  color: #0b5394;
+}
+
+.k_qst_group{
+ font-size: 14px;
+ font-family: Arial,Arial,Helvetica,sans-serif;
+  color: #0b5394;
+}
+
+.k_file_url{
+ color: blue;
+ cursor: pointer;
+ text-decoration: underline;
+}
+
+.k_file_url:hover{
+ color: red;
+ cursor: pointer;
+ text-decoration: underline;
+}
+
+.k_file_form{
+ position: absolute;
+ width: 90px;
+ height: 19px;
+ overflow: hidden;
+ cursor: pointer;
+}
+
+.k_file_form2{
+ opacity: 0;
+}
+
+.k_file_form2 input {
+ opacity: 0;
+ filter:alpha(opacity=0);
+ font-size: 60px;
+ cursor: pointer;
+ width: 200px;
+}
+
+@-moz-document url-prefix(){
+ .k_file_form2 input {
+ direction: rtl;
+ width: auto;
+}
+}
+
+@media all and (-webkit-min-device-pixel-ratio:0) {
+.k_file_form2 input {
+ direction: rtl;
+ width: auto;
+}
+}
+
+.k_upload_progress_img{
+ background: url("http://velodrive.clientbase.ru/images/upload_progress.gif") no-repeat top left;
+ width:14px;
+ height:14px;
+ display: inline-block;
+ outline: none;
+}
+
+                        </style>
+<link rel="stylesheet" href="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/autocomplete/jquery.autocomplete.css" />
+<link rel="stylesheet" href="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/autocomplete/lib/thickbox.css" />
+<link rel="stylesheet" href="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/jquery-ui.css" />
+<link rel="stylesheet" href="https://velodrive.clientbase.ru/themes/clientbase/libs/chosen/chosen.css" />
+<link rel="stylesheet" href="https://velodrive.clientbase.ru/themes/clientbase/libs/bootstrap/css/bootstrap.min.css" />
+<style>
+
+.add_link_img img{
+    border-radius: 50%;
+}
+
+.add_link_img {
+    margin-right: 10px;
+}
+
+/* временные костыли, убрать! */
+.well input.form-control {
+ padding-left: 10px;
+}
+
+.well input.ac_input {
+    width: 443px;
+}
+
+.well input.hasDatepicker {
+    width: 435px;
+}
+
+.well select.form-control {
+ padding-left: 5px;
+ width: 476px !important;
+ -moz-appearance: none;
+ -webkit-appearance: none;
+ appearance: none !important;
+}
+
+.well textarea.form-control {
+resize: vertical;
+ font-family: Arial;
+ padding-top: 10px;
+ padding-left: 10px;
+ height: 100px;
+}
+.well {
+    min-width: 530px;
+}
+
+textarea.form-control {
+    resize: vertical;
+}
+
+.form-control {
+    width: 100% !important;
+}
+
+.select-group {
+    position: relative;
+}
+
+.well .input-group select.form-control {
+    position: relative;
+    background: none;
+    border-radius: 4px;
+}
+
+.well .input-group select.form-control::-ms-expand {
+    display: none;
+}
+
+.custom-select {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    border-radius: 5px;
+}
+
+.pseudo-btn {
+    position: absolute;
+    border-left: 1px solid #ccc;
+    width: 1px;
+    height: 98%;
+    right: 34px;
+    top: 1px;
+}
+
+.select-caret {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    position: absolute;
+    top: 46%;
+    right: -20px;
+    vertical-align: middle;
+    border-top: 4px dashed;
+    border-top: 4px solid\9;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+}
+
+textarea.form-control {
+    resize: vertical;
+}
+
+.ui-datepicker-trigger {
+    opacity: 0 !important;
+    position: absolute !important;
+    top: -10000px !important;
+}
+
+.ui-timepicker-div .ui_tpicker_second_label {
+    float: left;
+    display: inline-block;
+    margin-top: 2px;
+    margin-left: 4px;
+    height: 14px;
+}
+
+.ui-timepicker-div .ui_tpicker_time_label {
+    float: left;
+    margin-left: 4px;
+    height: 14px;
+    margin-bottom: 5px;
+}
+
+.ui-timepicker-div .ui_tpicker_hour_label {
+    float: left;
+    display: inline-block;
+    margin-left: 4px;
+    height: 14px;
+    margin-bottom: 5px;
+}
+
+.ui-timepicker-div .ui_tpicker_minute_label {
+    float: left;
+    display: inline-block;
+    margin-left: 4px;
+    height: 14px;
+    margin-bottom: 5px;
+}
+
+.ui-timepicker-div .ui_tpicker_hour {
+    height: 14px;
+    margin-bottom: 5px;
+}
+
+.ui-timepicker-div .ui_tpicker_minute {
+    height: 14px;
+    margin-bottom: 5px;
+}
+
+.ui-timepicker-div .ui_tpicker_time {
+    /*float:left;*/
+    margin-left: 5.5em;
+    height: 14px;
+    margin-bottom: 5px;
+}
+
+.ui-timepicker-div .ui-slider.ui-slider-horizontal {
+    width: 10.5em;
+    height: 12px;
+    margin-left: 2.3em;
+}
+
+.ui-timepicker-div dd {
+    margin-left: 40px;
+}
+
+.ui_tpicker_minute,
+.ui_tpicker_hour {
+    padding-top: 4px;
+}
+
+.ui_tpicker_hour_label {
+    padding-top: 2px;
+}
+
+@media (min-width: 992px) {
+    .col-md-10 {
+        width: 97.333333% !important;
+    }
+}
+
+@media (max-width: 1000px) {
+    .pseudo-btn {
+        right: 75px;
+    }
+
+    .select-caret {
+        position: absolute;
+        top: 45%;
+        right: -62px;
+        border-top: 30px dashed black !important;
+        border-right: 25px solid transparent !important;
+        border-left: 25px solid transparent !important;
+    }
+}
+@media print {
+    .select-caret {
+        border-top: 4px dashed black !important;
+        border-right: 4px solid transparent !important;
+        border-left: 4px solid transparent !important;
+    }
+    .pseudo-btn {
+        border-left: 0px solid #ccc;
+    }
+}
+
+</style>
+
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/jquery-3.2.1.min.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/jquery-ui.min.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/widget.js"></script>
+<script src="https://velodrive.clientbase.ru/mobile/ui/lib/bootstrap.min.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/jquery-migrate.min.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/jquery.cookie.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/i18n/datepicker-ru.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/i18n/jquery-ui-timepicker-addon.min.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/i18n/jquery-ui-timepicker-ru.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/autocomplete/lib/jquery.ajaxQueue.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/autocomplete/lib/thickbox-compressed.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/autocomplete/jquery.autocomplete.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/js/autocomplete-settings.js"></script>
+<script src="https://velodrive.clientbase.ru/themes/clientbase/libs/chosen/chosen.jquery.js"></script>
+<link rel="stylesheet" href="https://velodrive.clientbase.ru/themes/clientbase/libs/jquery/jquery-ui.min.css">
+<link rel="stylesheet" href="https://velodrive.clientbase.ru/themes/clientbase/libs/bootstrap/css/bootstrap.min.css">
+
+<script>
+function k_addHandler(object, event, handler, useCapture) {
+    if ((document.getElementById('edit_form'))&&(object==document.getElementById('edit_form'))&&(event=="onsubmit"))
+       { // сохраняем события onsubmit формы edit_form
+         edit_form_submits.push(handler);
+       }
+
+    if (object.addEventListener) {
+        var t1;
+        if (event.substr(0,2).toLowerCase()=="on") t1=event.substr(2,1024); // убираем приставку on
+        object.addEventListener(t1, handler, useCapture ? useCapture : false);
+    } else if (object.attachEvent) {
+        object.attachEvent(event, handler);
+    } else alert("Add handler is not supported");
+}
+</script>
+
+<script>
+
+var k_form_rand_10=Math.random()+"_"+(new Date()).getTime(); // Уникальный id формы, используется в файлах и для получения ответа анкеты
+var k_upload_in_progress=0;
+var k_answer_hide_form10=1;
+var k_was_submited10=0;
+var k_10_curr_hash = '';
+var k_link_behavior = 1;
+
+function k_addHandler_date(id)
+{
+  var d=new Date();
+  var obj = document.getElementById('k_input_field_'+id);
+  if ((obj.value=="[cur.date]")||(obj.value=="[current_date]"))
+  {
+    day = d.getDate(); if (day<10) day = "0" + day;
+    month = d.getMonth()+1; if (month<10) month = "0" + month;
+    obj.value=day+"."+month+"."+d.getFullYear();
+  }
+  if ((obj.value=="[current_time]")||(obj.value=="[cur.time]"))
+  {
+    day = d.getDate(); if (day<10) day = "0" + day;
+    month = d.getMonth()+1; if (month<10) month = "0" + month;
+    hours = d.getHours(); if (hours<10) hours = "0" + hours;
+    minute = d.getMinutes(); if (minute<10) minute = "0" + minute;
+    obj.value=day+"."+month+"."+d.getFullYear()+" "+hours+":"+minute+":00";
+  }
+
+  k_addHandler(obj,"onkeydown", k_onkeydown_date);
+
+  if ($(obj).attr('size') == "19") {
+      $(obj).datetimepicker({
+            dateFormat: (typeof lang == 'undefined' ? 'dd.mm.yy' : lang.date_js_format),
+            timeFormat: "HH:mm",
+            showOn:"button",
+            showAlways: true,
+            buttonImage: "https://velodrive.clientbase.ru/images/calbtn.png",
+            buttonImageOnly: true,
+            buttonText: "Calendar",
+            showAnim: ((''=='v')?"":"show"),  // в ie не включаем анимацию, тормозит
+      }).attr('placeholder', lang.datetime_placeholder);
+    } else {
+      $(obj).datepicker({
+            showOn:"button",
+            dateFormat: (typeof lang == 'undefined' ? 'dd.mm.yy' : lang.date_js_format),
+            showAlways: true,
+            buttonImage: "https://velodrive.clientbase.ru/images/calbtn.png",
+            buttonImageOnly: true,
+            buttonText: "Calendar",
+            showAnim: ((''=='v')?"":"show"),  // в ie не включаем анимацию, тормозит
+      }).attr('placeholder', (typeof lang == 'undefined' ? 'дд.мм.гггг' : lang.date_placeholder));
+    }
+  //$('#k_input_calend_'+id).append($('#k_input_field_'+id+' + img')); // перемещаем календарь
+  $('#k_input_calend_'+id+' img').css('cursor', 'pointer');
+};
+
+function k_onkeydown_date(event)
+{
+  var obj=event.target; if (!obj) obj=event.srcElement;
+  if ((event.keyCode == 0xA)||(event.keyCode == 0xD))
+     {
+       if (window.event)
+          {
+            window.event.cancelBubble=true;
+            window.event.returnValue = false;
+          }
+          else
+          {
+            event.stopPropagation();
+            event.cancelBubble=true;
+            event.returnValue = false;
+          }
+       // Если нажат enter отменяем событие, и сохраняем значение
+       this.blur();
+       return false;
+     }
+}
+
+function k_save_qst10()
+{
+k_answer_hide_form10=1;
+var page_charset=window.document.charset;
+if (!page_charset) page_charset=window.document.characterSet;
+
+if (typeof(custom_save_qst10) == 'function') {
+      if (!custom_save_qst10()) return ;
+   }
+if (k_was_submited10) return;
+k_was_submited10=1;
+document.getElementById('k_savebutton10').disabled=true;
+document.getElementById('k_savebutton10').style.cursor='default';
+
+var qst_form=document.createElement("form");
+qst_form.setAttribute('enctype', 'multipart/form-data');
+qst_form.setAttribute('action',  'https://velodrive.clientbase.ru/questionare.php?page_charset='+page_charset+'&ts'+new Date().getTime());
+qst_form.setAttribute('target',  'k_frame_upload_10');
+qst_form.setAttribute('method',  'post');
+document.body.appendChild(qst_form);
+var qst_input;
+var utm_href = window.location.search;
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','utm_href');qst_form.appendChild(qst_input);
+qst_input.value=utm_href;
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_10_6261');qst_form.appendChild(qst_input);
+qst_input.value=document.getElementById('k_input_field_10_6261').value;
+if (!qst_input.value) {alert('Заполните, пожалуйста, поле: "Время посещения"'); document.getElementById('k_savebutton10').disabled=''; k_was_submited10=0; return;}
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_10_6291');qst_form.appendChild(qst_input);
+qst_input.value=document.getElementById('k_input_field_10_6291').value;
+if (!qst_input.value) {alert('Заполните, пожалуйста, поле: "Название Вашего велосипеда"'); document.getElementById('k_savebutton10').disabled=''; k_was_submited10=0; return;}
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_10_6251');qst_form.appendChild(qst_input);
+qst_input.value=document.getElementById('k_input_field_10_6251').value;
+if (!qst_input.value) {alert('Заполните, пожалуйста, поле: "Опишите проблему или необходимые работы"'); document.getElementById('k_savebutton10').disabled=''; k_was_submited10=0; return;}
+;
+if(k_10_curr_hash != '') {
+  qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','hash');qst_form.appendChild(qst_input);
+  qst_input.value=k_10_curr_hash;
+} else {
+  if(document.location.href.split('hash=')[1]) {
+    if(document.location.href.split('hash=')[1].split('.').length>1) {
+      qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','hash');qst_form.appendChild(qst_input);
+      qst_input.value=document.location.href.split('hash=')[1].split('.')[0];
+    }
+  }
+}
+
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_rand_10');qst_form.appendChild(qst_input);
+qst_input.value=k_form_rand_10;
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','sel');qst_form.appendChild(qst_input);
+qst_input.value='save';
+qst_form.submit();
+document.body.removeChild(qst_form);
+};
+function k_save_resp10(event)
+{
+  if (document.getElementById('k_frame_upload_10').src=='') return ; // Выходим если загрузки не было
+
+  var page_charset=window.document.charset;
+  if (!page_charset) page_charset=window.document.characterSet;
+  if (k_upload_in_progress)
+     { // Загрузка файлов
+       var obj=event.target; if (!obj) obj=event.srcElement;
+       // Убираем значек загрузки
+       $(".k_upload_progress").removeClass('k_upload_progress_img');
+       // Необходима проверка - загружен ли файл
+       for (var i = 0; i < k_upload_files_list.length; i++)
+           {
+              var f_name=k_upload_files_list[i].name;
+              var f_obj =k_upload_files_list[i].obj;
+              var rnd_sess=Math.floor(Math.random()*10000);
+              var ss = document.createElement('script');
+              ss.src="https://velodrive.clientbase.ru/questionare.php?sel=test_upload&qst_id=10&k_rand="+k_form_rand_10+"&k_resp="+rnd_sess+"&f_name="+f_name+"&page_charset="+page_charset;
+              ss.setAttribute('i_pos',i);
+              ss.setAttribute('rnd_sess',rnd_sess);
+              var done = false;
+              ss.onload=ss.onreadystatechange=function(){
+                 if ( !done && (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") )
+                    {
+                        done = true;
+                        var i=this.getAttribute("i_pos");
+                        var rnd_sess=this.getAttribute("rnd_sess");
+                        var f_name=k_upload_files_list[i].name;
+                        var f_obj =k_upload_files_list[i].obj
+                        var field_id =k_upload_files_list[i].field_id;
+                        eval("var data=k_resp"+rnd_sess+";");
+                        if (data.indexOf(' uploaded.')!=-1)
+                           {
+                              var size = parseInt(data)+"";
+                              size=size.replace(/(\d)(?=(\d\d\d)+([^\d]|$))/g, '$1 ');
+                              // Отображем размер
+                              f_obj.find(".k_upload_progress").html(" - "+size+" B" +
+                                    " <a href='' onclick='k_del_file(this); return false;' field_id='"+field_id+"' f_name='"+f_name+"'>"+
+                                    "<img alt='удалить' title='Удалить файл' src='images/b_drop.png' border='0'></a>");
+                              var was_upload = +document.getElementById('k_sbmt_file_10_'+field_id).getAttribute('was_upload');
+                              document.getElementById('k_sbmt_file_10_'+field_id).setAttribute('was_upload', was_upload + 1);
+                           }
+                           else
+                           {
+                              f_obj.find(".k_upload_progress").html(" - Провалено");
+                           }
+
+                        ss.onload = ss.onreadystatechange = null;
+                        document.body.removeChild(ss);
+                    }
+                 }
+              document.body.appendChild(ss);
+            }
+       k_upload_in_progress=0;
+       return ;
+     }
+  if (document.getElementById('k_frame_upload_10').getAttribute('second_load'))
+     {
+      if (!k_was_submited10) return;
+      k_was_submited10=0;
+      //document.getElementById('k_savebutton10').style.display='none';
+      document.getElementById('k_savebutton10').disabled=false;
+      if (typeof(custom_qst_res10) == 'function') {
+          custom_qst_res10();
+        }
+        else
+        {
+          // Получаем результат формы
+          var ss = document.createElement('script');
+          ss.src="https://velodrive.clientbase.ru/questionare.php?sel=get_answer&qst_id=10&k_rand="+k_form_rand_10;
+          var done = false;
+          ss.onload=ss.onreadystatechange=function(){
+             if ( !done && (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") )
+                {
+                   done = true;
+
+                   try {
+                     var data = JSON.parse(k_answer10);
+                   } catch (e) {
+                     var data = k_answer10;
+                   }
+
+                   delete k_answer10;
+
+                   if (data.error !== undefined)
+                      {
+                        $('#k_qst_err_res_10').html('');
+                        if (data.error != ' ')
+                            $('#k_qst_err_res_10').append(data.error);
+                        data = false;
+                        k_answer_hide_form10 = 0;
+                        document.getElementById('k_savebutton10').style.display = '';
+                      }
+                   else if (data !== undefined && data != '' && data != ' ')
+                      {
+                        if (data != ' ')
+                            $('#k_qst_res_10').append(data);
+                            document.getElementById('k_savebutton10').style.display='';
+                      }
+                   else
+                      {
+                        //document.getElementById('k_qst_res_10').innerHTML='Заявка успешно принята. Спасибо!';
+                      }
+                   if (k_answer_hide_form10)
+                      {
+                        //обработка ответ, если в нем есть переменные
+                        var new_qst_text = 'Заявка успешно принята. Спасибо!';
+                        $.ajax({
+                            method: 'POST',
+                            url: 'https://velodrive.clientbase.ru/questionare.php',
+                            async: false,
+                            data: { qst_text: new_qst_text,sel: 'get_success_message',qst_id:'10' }
+                            })
+                            .done(function( msg ) {
+                                 new_qst_text = msg ;
+                            });
+
+                        document.getElementById('k_qst_10').style.display='none';
+                        location.href='#qst_res_link10';
+                        if ($('#k_qst_res_10').text()=='') document.getElementById('k_qst_res_10').innerHTML=new_qst_text;
+                      }
+
+                   ss.onload = ss.onreadystatechange = null;
+                   document.body.removeChild(ss);
+                }
+             }
+          document.body.appendChild(ss);
+        }
+      document.getElementById('k_frame_upload_10').src=""; // Четвертый уровень защиты от повторной загрузки
+     }
+     else
+      document.getElementById('k_frame_upload_10').setAttribute('second_load',1);
+}
+$(function(){
+  if(document.getElementById('k_frame_upload_10').onload == null) {
+    $('#k_frame_upload_10').on('load', function(event) { k_save_resp10(event); });
+  }
+  if (window.k_qst10_def_value6261) $('#k_input_field_10_6261').val(window.k_qst10_def_value6261);
+  if (window.k_qst10_def_value6291) $('#k_input_field_10_6291').val(window.k_qst10_def_value6291);
+  if (window.k_qst10_def_value6251) $('#k_input_field_10_6251').val(window.k_qst10_def_value6251);
+
+});
+</script>
+
+<iframe name='k_frame_upload_10' id='k_frame_upload_10' style='width:1px;height:1px;display:none;' onload='k_save_resp10(event);'></iframe>
+
+<script>
+document.getElementById('k_frame_upload_10').src='';
+</script>
+
+<div align='center' style='color:red; padding-bottom:15px;' id='k_qst_err_res_10'></div>
+
+<div class='well' style='width:500px; margin:auto;' id='k_qst_10' >
+
+<h3 style="font-weight: bold;text-align: center;">Записаться на обслуживание</h3>
+
+<div class='form-group row'>
+<label class='col-md-10 control-label k_field_name'>Время посещения <span class='text-danger'>*</span></label>
+<div class='col-md-10'>
+    <div class='input-group calendar'>
+        <input type='text' class='form-control k_input_date' id='k_input_field_10_6261' value='' cur_value='' size='19' maxlength='19' onclick='$(this).next(".ui-datepicker-trigger").trigger("click");'>
+        <div class='input-group-addon' style='background-color: #fff; cursor: pointer; padding: 6px 8px;' id='k_input_calend_10_6261' onclick='$(this).prev(".ui-datepicker-trigger").trigger("click");'><img src='images/calbtn.png' alt='Calendar' title='Calendar'></div>
+    </div>
+    <script>k_addHandler_date('10_6261');</script>
+</div>
+</div>
+
+<div class='form-group row'>
+<label class='col-md-10 control-label k_field_name'>Название Вашего велосипеда <span class='text-danger'>*</span></label>
+<div class='col-md-10'>
+    <input type='text' class='form-control' id='k_input_field_10_6291' placeholder='' value=''>
+</div>
+</div>
+
+<div class='form-group row'>
+<label class='col-md-10 control-label k_field_name'>Опишите проблему или необходимые работы <span class='text-danger'>*</span></label>
+<div class='col-md-10'>
+    <textarea class='form-control' id='k_input_field_10_6251' placeholder=''>ТО</textarea>
+</div>
+</div>
+
+<div class='form-group row'>
+<div class='col-md-10'>
+    <span class='text-danger'>*</span> - обязательное для заполнения
+</div>
+</div>
+
+<div class='form-group row' align='center'>
+    <input type='button' class='btn btn-primary' id='k_savebutton10' onclick='if (k_upload_in_progress) alert("Файл еще не загружен, дождитесь загрузки файла."); else k_save_qst10();return false;' value='Отправить'>
+</div>
+
+</div>
+
+<div align='center'>
+    <a name='qst_res_link10'></a>
+    <div id='k_qst_res_10'></div>
+</div>
+<!-- BEGIN OF CUSTOM JAVASCRIPT --><!-- END OF CUSTOM JAVASCRIPT -->
