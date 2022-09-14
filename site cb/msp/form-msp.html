@@ -1,0 +1,276 @@
+<script>
+
+var k_form_rand_332=Math.random()+"_"+(new Date()).getTime(); // Уникальный id формы, используется в файлах и для получения ответа анкеты
+var k_upload_in_progress=0;
+var k_answer_hide_form332=1;
+var k_was_submited332=0;
+var k_332_curr_hash = '';
+var k_link_behavior = 1;
+
+var k_qst332_def_value19362='Хочу аккаунт со скидкой 50% (господдержка)';
+var k_qst332_def_value18272='null';
+
+function k_save_qst332()
+{
+k_answer_hide_form332=1;
+var page_charset=window.document.charset;
+if (!page_charset) page_charset=window.document.characterSet;
+
+if (typeof(custom_save_qst332) == 'function') {
+      if (!custom_save_qst332()) return ;
+   }
+if (k_was_submited332) return;
+k_was_submited332=1;
+document.getElementById('k_savebutton332').disabled=true;
+document.getElementById('k_savebutton332').style.cursor='default';
+
+var qst_form=document.createElement("form");
+qst_form.setAttribute('enctype', 'multipart/form-data');
+qst_form.setAttribute('action',  'https://manage.clientbase.ru/questionare.php?page_charset='+page_charset+'&ts'+new Date().getTime());
+qst_form.setAttribute('target',  'k_frame_upload_332');
+qst_form.setAttribute('method',  'post');
+document.body.appendChild(qst_form);
+var qst_input;
+var utm_href = window.location.search;
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','utm_href');qst_form.appendChild(qst_input);
+qst_input.value=utm_href;
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_332_18202');qst_form.appendChild(qst_input);
+qst_input.value=document.getElementById('k_input_field_332_18202').value;
+if (!qst_input.value) {alert('Заполните, пожалуйста, поле: "ФИО"'); document.getElementById('k_savebutton332').disabled=''; k_was_submited332=0; return;}
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_332_18212');qst_form.appendChild(qst_input);
+qst_input.value=document.getElementById('k_input_field_332_18212').value;
+if (!qst_input.value) {alert('Заполните, пожалуйста, поле: "Телефон"'); document.getElementById('k_savebutton332').disabled=''; k_was_submited332=0; return;}
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_332_18222');qst_form.appendChild(qst_input);
+qst_input.value=document.getElementById('k_input_field_332_18222').value;
+if (!qst_input.value) {alert('Заполните, пожалуйста, поле: "E-Mail"'); document.getElementById('k_savebutton332').disabled=''; k_was_submited332=0; return;}
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_332_20212');qst_form.appendChild(qst_input);
+qst_input.value=document.getElementById('k_input_field_332_20212').value;
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_332_19362');qst_form.appendChild(qst_input);
+qst_input.value=k_qst332_def_value19362;
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_332_18272');qst_form.appendChild(qst_input);
+qst_input.value=k_qst332_def_value18272;
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_input_field_332_18292');qst_form.appendChild(qst_input);
+qst_input.value=document.getElementById('k_input_field_332_18292').value;
+;
+if(k_332_curr_hash != '') {
+  qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','hash');qst_form.appendChild(qst_input);
+  qst_input.value=k_332_curr_hash;
+} else {
+  if(document.location.href.split('hash=')[1]) {
+    if(document.location.href.split('hash=')[1].split('.').length>1) {
+      qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','hash');qst_form.appendChild(qst_input);
+      qst_input.value=document.location.href.split('hash=')[1].split('.')[0];
+    }
+  }
+}
+
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','k_rand_332');qst_form.appendChild(qst_input);
+qst_input.value=k_form_rand_332;
+qst_input=document.createElement('input');qst_input.setAttribute('type','hidden');qst_input.setAttribute('name','sel');qst_form.appendChild(qst_input);
+qst_input.value='save';
+qst_form.submit();
+document.body.removeChild(qst_form);
+};
+function k_save_resp332(event)
+{
+  if (document.getElementById('k_frame_upload_332').src=='') return ; // Выходим если загрузки не было
+
+  var page_charset=window.document.charset;
+  if (!page_charset) page_charset=window.document.characterSet;
+  if (k_upload_in_progress)
+     { // Загрузка файлов
+       var obj=event.target; if (!obj) obj=event.srcElement;
+       // Убираем значек загрузки
+       $(".k_upload_progress").removeClass('k_upload_progress_img');
+       // Необходима проверка - загружен ли файл
+       for (var i = 0; i < k_upload_files_list.length; i++)
+           {
+              var f_name=k_upload_files_list[i].name;
+              var f_obj =k_upload_files_list[i].obj;
+              var rnd_sess=Math.floor(Math.random()*10000);
+              var ss = document.createElement('script');
+              ss.src="https://manage.clientbase.ru/questionare.php?sel=test_upload&qst_id=332&k_rand="+k_form_rand_332+"&k_resp="+rnd_sess+"&f_name="+f_name+"&page_charset="+page_charset;
+              ss.setAttribute('i_pos',i);
+              ss.setAttribute('rnd_sess',rnd_sess);
+              var done = false;
+              ss.onload=ss.onreadystatechange=function(){
+                 if ( !done && (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") )
+                    {
+                        done = true;
+                        var i=this.getAttribute("i_pos");
+                        var rnd_sess=this.getAttribute("rnd_sess");
+                        var f_name=k_upload_files_list[i].name;
+                        var f_obj =k_upload_files_list[i].obj
+                        var field_id =k_upload_files_list[i].field_id;
+                        eval("var data=k_resp"+rnd_sess+";");
+                        if (data.indexOf(' uploaded.')!=-1)
+                           {
+                              var size = parseInt(data)+"";
+                              size=size.replace(/(\d)(?=(\d\d\d)+([^\d]|$))/g, '$1 ');
+                              // Отображем размер
+                              f_obj.find(".k_upload_progress").html(" - "+size+" B" +
+                                    " <a href='' onclick='k_del_file(this); return false;' field_id='"+field_id+"' f_name='"+f_name+"'>"+
+                                    "<img alt='удалить' title='Удалить файл' src='images/b_drop.png' border='0'></a>");
+                              var was_upload = +document.getElementById('k_sbmt_file_332_'+field_id).getAttribute('was_upload');
+                              document.getElementById('k_sbmt_file_332_'+field_id).setAttribute('was_upload', was_upload + 1);
+                           }
+                           else
+                           {
+                              f_obj.find(".k_upload_progress").html(" - Провалено");
+                           }
+
+                        ss.onload = ss.onreadystatechange = null;
+                        document.body.removeChild(ss);
+                    }
+                 }
+              document.body.appendChild(ss);
+            }
+       k_upload_in_progress=0;
+       return ;
+     }
+  if (document.getElementById('k_frame_upload_332').getAttribute('second_load'))
+     {
+      if (!k_was_submited332) return;
+      k_was_submited332=0;
+      //document.getElementById('k_savebutton332').style.display='none';
+      document.getElementById('k_savebutton332').disabled=false;
+      if (typeof(custom_qst_res332) == 'function') {
+          custom_qst_res332();
+        }
+        else
+        {
+          // Получаем результат формы
+          var ss = document.createElement('script');
+          ss.src="https://manage.clientbase.ru/questionare.php?sel=get_answer&qst_id=332&k_rand="+k_form_rand_332;
+          var done = false;
+          ss.onload=ss.onreadystatechange=function(){
+             if ( !done && (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") )
+                {
+                   done = true;
+
+                   try {
+                     var data = JSON.parse(k_answer332);
+                   } catch (e) {
+                     var data = k_answer332;
+                   }
+
+                   delete k_answer332;
+
+                   if (data.error !== undefined)
+                      {
+                        $('#k_qst_err_res_332').html('');
+                        if (data.error != ' ')
+                            $('#k_qst_err_res_332').append(data.error);
+                        data = false;
+                        k_answer_hide_form332 = 0;
+                        document.getElementById('k_savebutton332').style.display = '';
+                      }
+                   else if (data !== undefined && data != '' && data != ' ')
+                      {
+                        if (data != ' ')
+                            $('#k_qst_res_332').append(data);
+                            document.getElementById('k_savebutton332').style.display='';
+                      }
+                   else
+                      {
+                        //document.getElementById('k_qst_res_332').innerHTML='Мы получили вашу заявку и скоро свяжемся с вами!';
+                      }
+                   if (k_answer_hide_form332)
+                      {
+                        //обработка ответ, если в нем есть переменные
+                        var new_qst_text = 'Мы получили вашу заявку и скоро свяжемся с вами!';
+                        $.ajax({
+                            method: 'POST',
+                            url: 'https://manage.clientbase.ru/questionare.php',
+                            async: false,
+                            data: { qst_text: new_qst_text,sel: 'get_success_message',qst_id:'332' }
+                            })
+                            .done(function( msg ) {
+                                 new_qst_text = msg ;
+                            });
+
+                        document.getElementById('k_qst_332').style.display='none';
+                        location.href='#qst_res_link332';
+                        if ($('#k_qst_res_332').text()=='') document.getElementById('k_qst_res_332').innerHTML=new_qst_text;
+                      }
+
+                   ss.onload = ss.onreadystatechange = null;
+                   document.body.removeChild(ss);
+                }
+             }
+          document.body.appendChild(ss);
+        }
+      document.getElementById('k_frame_upload_332').src=""; // Четвертый уровень защиты от повторной загрузки
+     }
+     else
+      document.getElementById('k_frame_upload_332').setAttribute('second_load',1);
+}
+$(function(){
+  if(document.getElementById('k_frame_upload_332').onload == null) {
+    $('#k_frame_upload_332').on('load', function(event) { k_save_resp332(event); });
+  }
+  if (window.k_qst332_def_value18202) $('#k_input_field_332_18202').val(window.k_qst332_def_value18202);
+  if (window.k_qst332_def_value18212) $('#k_input_field_332_18212').val(window.k_qst332_def_value18212);
+  if (window.k_qst332_def_value18222) $('#k_input_field_332_18222').val(window.k_qst332_def_value18222);
+  if (window.k_qst332_def_value20212) $('#k_input_field_332_20212').val(window.k_qst332_def_value20212);
+  if (window.k_qst332_def_value18292) $('#k_input_field_332_18292').val(window.k_qst332_def_value18292);
+
+});
+</script>
+
+<iframe name='k_frame_upload_332' id='k_frame_upload_332' style='width:1px;height:1px;display:none;' onload='k_save_resp332(event);'></iframe>
+
+<script>
+document.getElementById('k_frame_upload_332').src='';
+</script>
+
+<div align='center' style='color:red; padding-bottom:15px;' id='k_qst_err_res_332'></div>
+
+<div class='well' id='k_qst_332' >
+
+<h3 style="font-weight: bold;text-align: center;"></h3>
+
+<div>
+  <div class='kanban-answer-form__input-wrapper'>
+      <input type='text' class='order-form__inner-input' id='k_input_field_332_18202' placeholder='ФИО' value=''>
+  </div>
+</div>
+
+<div>
+  <div class='kanban-answer-form__input-wrapper'>
+      <input type='text' class='order-form__inner-input' id='k_input_field_332_18212' placeholder='Телефон' value=''>
+  </div>
+</div>
+
+<div>
+  <div class='kanban-answer-form__input-wrapper'>
+      <input type='text' class='order-form__inner-input' id='k_input_field_332_18222' placeholder='E-Mail' value=''>
+  </div>
+</div>
+
+<div>
+<div class='kanban-answer-form__input-wrapper'>
+    <input type='text' class='order-form__inner-input' id='k_input_field_332_20212' placeholder='Название вашей компании' value=''>
+</div>
+</div>
+
+<div class='kanban-answer-form__input-wrapper'>
+    <select class='order-form__inner-input order-form__inner-input--select' id='k_input_field_332_18292' value='Вы действующий клиент?'>
+        <option value=''></option>
+        <option value='Да'>Да</option>
+        <option selected value='Нет'>Нет</option>
+      </select>
+</div>
+
+<div class='kanban-answer-form__input-wrapper_but'>
+    <input type='button' class='kanban-answer-form__button kanban-button__default' id='k_savebutton332' onclick='if (k_upload_in_progress) alert("Файл еще не загружен, дождитесь загрузки файла."); else k_save_qst332();return false;' value='Подать заявку'>
+</div>
+
+</div>
+
+<div align='center'>
+    <a name='qst_res_link332'></a>
+    <div class="kanban-answer-form__success" id='k_qst_res_332'></div>
+</div>
+<!-- BEGIN OF CUSTOM JAVASCRIPT --><!-- END OF CUSTOM JAVASCRIPT -->
+                        
